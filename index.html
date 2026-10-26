@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pictoteclas</title>
+<meta name="author" content="David OZC">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%232C6E86%22/%3E%3Crect x=%2214%22 y=%2214%22 width=%2216%22 height=%2216%22 rx=%224%22 fill=%22white%22/%3E%3Crect x=%2234%22 y=%2234%22 width=%2216%22 height=%2216%22 rx=%224%22 fill=%22white%22/%3E%3C/svg%3E">
+<meta name="description" content="Tableros de pictogramas que se activan con Makey Makey, para alumnado TEA: comunicar, causa-efecto, paso a paso y elegir.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@500;700&display=swap">
+<style>
+/* Concepto: tablero de comunicación aumentativa (SAAC). Fondo tranquilo, fichas grandes con borde de color
+   según la clave de colores de los pictogramas (personas, acciones, cosas, descripciones, social). */
+:root {
+  --bg: #EDF2EF;          /* salvia muy pálido: poco estímulo */
+  --surface: #FFFFFF;
+  --ink: #1E2A2F;
+  --muted: #56666C;
+  --line: #CBD6D1;
+  --accent: #2C6E86;      /* azul petróleo tranquilo */
+  --accent-ink: #FFFFFF;
+  --focus: #D08700;
+  --hit: #FFF3C4;         /* resalte de la ficha activada */
+  --cat-persona: #E5B800; --cat-accion: #3C9A4A; --cat-cosa: #E27B1E;
+  --cat-descripcion: #2B78C5; --cat-social: #D6518E; --cat-otro: #8995A0;
+  --font-ui: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --font-label: "Atkinson Hyperlegible", "Verdana", "Segoe UI", sans-serif;
+  --radius: 22px;
+  --shadow: 0 2px 0 rgba(30,42,47,.06), 0 8px 22px rgba(30,42,47,.08);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12201F; --surface: #1B2B2C; --ink: #E7EFEC; --muted: #A2B3B0; --line: #2E4342;
+    --accent: #7BC1D6; --accent-ink: #0F1A1C; --focus: #F2B544; --hit: #33412A;
+    --shadow: 0 2px 0 rgba(0,0,0,.25), 0 8px 22px rgba(0,0,0,.25); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12201F; --surface: #1B2B2C; --ink: #E7EFEC; --muted: #A2B3B0; --line: #2E4342;
+  --accent: #7BC1D6; --accent-ink: #0F1A1C; --focus: #F2B544; --hit: #33412A;
+  --shadow: 0 2px 0 rgba(0,0,0,.25), 0 8px 22px rgba(0,0,0,.25); color-scheme: dark;
+}
+/* Temas sensoriales elegidos desde el panel docente (tienen prioridad sobre el del sistema) */
+.app[data-sensory="suave"] {
+  --bg: #EDF2EF; --surface: #FFFFFF; --ink: #1E2A2F; --muted: #56666C; --line: #CBD6D1;
+  --accent: #2C6E86; --accent-ink: #FFFFFF; --focus: #D08700; --hit: #FFF3C4; color-scheme: light;
+}
+.app[data-sensory="oscuro"] {
+  --bg: #12201F; --surface: #1B2B2C; --ink: #E7EFEC; --muted: #A2B3B0; --line: #2E4342;
+  --accent: #7BC1D6; --accent-ink: #0F1A1C; --focus: #F2B544; --hit: #33412A; color-scheme: dark;
+}
+.app[data-sensory="contraste"] {
+  --bg: #000000; --surface: #000000; --ink: #FFFFFF; --muted: #FFFFFF; --line: #FFFFFF;
+  --accent: #FFE14D; --accent-ink: #000000; --focus: #FFE14D; --hit: #3A3300; --shadow: none; color-scheme: dark;
+}
+.app[data-sensory="contraste"] .tile { border-width: 8px; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); -webkit-tap-highlight-color: transparent; }
+.app { height: 100%; display: flex; flex-direction: column; background: var(--bg); color: var(--ink);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+
+/* ---------- barra superior ---------- */
+.bar { display: flex; align-items: center; gap: 12px; padding-block: 10px 6px; min-height: 56px; }
+.brand { font-weight: 700; letter-spacing: .01em; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+.brand .mark { width: 26px; height: 26px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; }
+.brand .mark i { display: block; width: 14px; height: 14px; border-radius: 3px; background: conic-gradient(var(--accent-ink) 0 25%, transparent 0 50%, var(--accent-ink) 0 75%, transparent 0); }
+.activity { color: var(--muted); font-size: .95rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .spacer { flex: 1; }
+.iconbtn { width: 48px; height: 48px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; cursor: pointer; position: relative; }
+.iconbtn svg { width: 22px; height: 22px; fill: var(--ink); }
+.iconbtn .ring { position: absolute; inset: -4px; border-radius: 17px; pointer-events: none;
+  background: conic-gradient(var(--accent) calc(var(--p, 0) * 1turn), transparent 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0); mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0); }
+.hint { font-size: .8rem; color: var(--muted); }
+.by { font-size: .82rem; color: var(--muted); white-space: nowrap; }
+.panel .by { display: block; margin-top: 2px; white-space: normal; }
+.panel header > div { min-width: 0; }
+@media (max-width: 720px) { .bar .by { display: none; } }
+
+/* ---------- escenario ---------- */
+.stage { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding-block: 6px 16px; position: relative; }
+.grid { flex: 1; min-height: 0; display: grid; gap: clamp(10px, 2vmin, 22px);
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); }
+.tile { position: relative; border: 6px solid var(--cat, var(--cat-otro)); border-radius: var(--radius); background: var(--surface);
+  box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4%;
+  padding: clamp(10px, 2vmin, 22px) clamp(8px, 1.6vmin, 18px) clamp(8px, 1.6vmin, 16px); cursor: pointer; min-height: 0; min-width: 0; overflow: hidden; color: var(--ink);
+  transition: transform .12s ease, background-color .2s ease; touch-action: manipulation; }
+.tile:active { transform: scale(.98); }
+.tile .pic { flex: 1; min-height: 0; width: 100%; display: grid; place-items: center; }
+.tile .pic svg, .tile .pic img { width: auto; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; fill: currentColor; }
+.tile { container-type: inline-size; }
+.tile .lab { font-family: var(--font-label); font-weight: 700; font-size: var(--lab-size, clamp(1.1rem, 3.2vmin, 2.4rem)); font-size: min(var(--lab-size, 2.4rem), calc(118cqi / var(--w, 8))); line-height: 1.1;
+  text-align: center; overflow-wrap: anywhere; max-width: 100%; }
+.app[data-upper="true"] .lab, .app[data-upper="true"] .bigword { text-transform: uppercase; letter-spacing: .03em; }
+.app[data-labels="false"] .tile .lab { display: none; }
+.key { position: absolute; top: 8px; left: 8px; min-width: 36px; height: 30px; padding: 0 8px; border-radius: 10px;
+  background: var(--ink); color: var(--bg); font: 700 1rem/30px var(--font-ui); text-align: center; letter-spacing: .02em; }
+.app[data-keys="false"] .key { display: none; }
+.tile.hit { background: var(--hit); transform: scale(1.03); box-shadow: 0 0 0 6px var(--accent), var(--shadow); }
+.tile.prompt { animation: pulse 1.1s ease-in-out infinite; box-shadow: 0 0 0 6px var(--focus), var(--shadow); }
+.tile.dim { opacity: .45; }
+@keyframes pulse { 50% { transform: scale(1.04); } }
+.cat-persona { --cat: var(--cat-persona); } .cat-accion { --cat: var(--cat-accion); } .cat-cosa { --cat: var(--cat-cosa); }
+.cat-descripcion { --cat: var(--cat-descripcion); } .cat-social { --cat: var(--cat-social); } .cat-otro { --cat: var(--cat-otro); }
+
+/* comunicar: franja del mensaje */
+.said { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 8px 14px; border-radius: 18px; background: var(--surface); border: 2px dashed var(--line); }
+.said .mini { width: 56px; height: 56px; display: grid; place-items: center; }
+.said .mini svg, .said .mini img { width: 100%; height: 100%; object-fit: contain; fill: currentColor; }
+.said .bigword { font-family: var(--font-label); font-weight: 700; font-size: clamp(1.3rem, 4vmin, 2.2rem); }
+.said .empty { color: var(--muted); }
+
+/* causa-efecto */
+.cause { flex: 1; min-height: 0; display: grid; place-items: center; }
+.cause .tile { width: min(70vmin, 100%); height: min(70vmin, 100%); }
+
+/* paso a paso */
+.seq { flex: 1; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; }
+.seq .current { display: grid; place-items: center; min-height: 0; }
+.seq .current .tile { height: 100%; aspect-ratio: 1 / 1; max-width: 100%; }
+.strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; }
+.step { flex: 0 0 auto; width: clamp(64px, 12vmin, 110px); height: clamp(64px, 12vmin, 110px); border-radius: 16px; border: 4px solid var(--cat, var(--cat-otro));
+  background: var(--surface); position: relative; display: grid; place-items: center; padding: 10px; }
+.step svg, .step img { width: 100%; height: 100%; object-fit: contain; fill: currentColor; }
+.step.done { opacity: .4; }
+.step.done::after { content: ""; position: absolute; right: -6px; top: -6px; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--cat-accion) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z' fill='white'/%3E%3C/svg%3E") center/70% no-repeat; }
+.step.now { box-shadow: 0 0 0 5px var(--accent); }
+.step .n { position: absolute; left: 6px; top: 4px; font: 700 .8rem var(--font-ui); color: var(--muted); }
+
+/* elegir */
+.choose { flex: 1; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 14px; }
+.model { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 10px; border-radius: 18px; background: var(--surface); border: 2px solid var(--line); }
+.model .ask { font-family: var(--font-label); font-weight: 700; font-size: clamp(1.2rem, 3.6vmin, 2rem); }
+.model .mini { width: clamp(60px, 14vmin, 130px); height: clamp(60px, 14vmin, 130px); display: grid; place-items: center; border-radius: 16px; border: 5px solid var(--cat, var(--cat-otro)); padding: 8px; }
+.model .mini svg, .model .mini img { width: 100%; height: 100%; object-fit: contain; fill: currentColor; }
+.dots { display: flex; gap: 6px; justify-content: center; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); }
+.dots i.on { background: var(--cat-accion); border-color: var(--cat-accion); }
+
+.keyhelp { text-align: center; color: var(--muted); font-size: .95rem; }
+.app[data-keys="false"] .keyhelp { display: none; }
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+
+/* ---------- panel docente ---------- */
+dialog { border: 0; padding: 0; border-radius: 22px; background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  width: min(920px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+dialog::backdrop { background: rgba(10, 20, 22, .55); }
+.panel { display: grid; grid-template-rows: auto auto minmax(0, 1fr); max-height: calc(100dvh - 24px); }
+.panel header { display: flex; align-items: center; gap: 10px; padding: 16px 18px 8px; }
+.panel h2 { margin: 0; font-size: 1.25rem; }
+.tabs { display: flex; gap: 6px; padding: 0 14px 10px; overflow-x: auto; border-bottom: 2px solid var(--line); }
+.tabs button { border: 0; background: transparent; padding: 10px 12px; border-radius: 12px; cursor: pointer; white-space: nowrap; color: var(--muted); font-weight: 500; }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.tabbody { overflow: auto; padding: 16px 18px 22px; display: grid; gap: 18px; align-content: start; }
+.tabbody h3 { margin: 4px 0 0; font-size: 1.02rem; }
+.tabbody p { margin: 0; line-height: 1.5; color: var(--muted); max-width: 70ch; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > span { font-size: .85rem; color: var(--muted); }
+input[type="text"], input[type="search"], select, textarea { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); min-height: 44px; min-width: 0; }
+textarea { min-height: 110px; width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; }
+.btn { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; cursor: pointer; min-height: 44px; font-weight: 500; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { border-color: #C2413A; color: #C2413A; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.mcard { border: 2px solid var(--line); border-radius: 16px; padding: 12px; background: var(--bg); cursor: pointer; text-align: left; display: grid; gap: 4px; }
+.mcard b { font-size: 1rem; }
+.mcard small { color: var(--muted); line-height: 1.35; }
+.mcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent) inset; }
+.cfg { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.list { display: grid; gap: 10px; }
+.item { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 2px solid var(--line); border-radius: 16px; background: var(--bg); }
+.item .thumb { width: 64px; height: 64px; border-radius: 12px; border: 4px solid var(--cat, var(--cat-otro)); background: var(--surface); display: grid; place-items: center; padding: 6px; cursor: pointer; }
+.item .thumb svg, .item .thumb img { width: 100%; height: 100%; object-fit: contain; fill: currentColor; }
+.item .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 8px; min-width: 0; }
+.item .acts { display: flex; flex-direction: column; gap: 6px; }
+.item .acts .btn { padding: 6px 10px; min-height: 40px; font-size: .85rem; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--bg); border: 2px solid var(--line); font-size: .85rem; }
+.keytest { font: 700 1.1rem var(--font-ui); padding: 10px 14px; border-radius: 12px; background: var(--bg); border: 2px dashed var(--line); }
+table.log { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+table.log td, table.log th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.toast { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 12px 16px; border-radius: 14px; z-index: 50; max-width: calc(100vw - 32px); }
+.credits { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+
+/* selector de pictogramas */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.pgrid button { border: 4px solid var(--cat, var(--line)); border-radius: 14px; background: var(--surface); padding: 8px; display: grid; gap: 4px; justify-items: center; cursor: pointer; min-height: 96px; }
+.pgrid button svg, .pgrid button img { width: 52px; height: 52px; object-fit: contain; fill: currentColor; }
+.pgrid button span { font-size: .8rem; text-align: center; overflow-wrap: anywhere; }
+
+@media (max-width: 560px) {
+  .brand .word { display: none; }
+  .item { grid-template-columns: 56px minmax(0, 1fr); }
+  .item .acts { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+}
+
+/* pantallas bajas (móvil en horizontal): más espacio para el pictograma */
+@media (max-height: 520px) {
+  .bar { min-height: 44px; padding-block: 4px 2px; }
+  .iconbtn { width: 44px; height: 44px; }
+  .stage { gap: 8px; padding-block: 2px 8px; }
+  .keyhelp { display: none; }
+  .said { min-height: 44px; padding: 4px 10px; }
+  .said .mini { width: 36px; height: 36px; }
+  .model { padding: 4px 10px; }
+  .seq { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr); }
+  .strip { flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 2px 8px 2px 2px; }
+  .step { width: 52px; height: 52px; border-width: 3px; padding: 6px; }
+  .dots { display: none; }
+  .tile .lab { font-size: min(var(--lab-size, 2.4rem), calc(118cqi / var(--w, 8)), 6.5vh); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile, .tile.hit { transition: none; transform: none; }
+  .tile.prompt { animation: none; }
+}
+.app[data-motion="false"] .tile, .app[data-motion="false"] .tile.hit { transition: none; transform: none; }
+.app[data-motion="false"] .tile.prompt { animation: none; }
+</style>
+</head>
+<body>
+
+
+<div class="app" id="app">
+  <header class="bar">
+    <div class="brand"><span class="mark" aria-hidden="true"><i></i></span><span class="word">Pictoteclas</span></div>
+    <div class="activity" id="activityName"></div>
+    <div class="spacer"></div>
+    <span class="by">Diseñado por David OZC</span>
+    <button class="iconbtn" id="fsBtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>
+    </button>
+    <button class="iconbtn" id="gearBtn" type="button" aria-label="Panel docente (mantén pulsado o pulsa Esc)" title="Panel docente: mantén pulsado 1 segundo o pulsa Esc">
+      <span class="ring" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>
+    </button>
+  </header>
+  <main class="stage" id="stage" aria-label="Actividad"></main>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <dialog id="panel" aria-labelledby="panelTitle">
+    <div class="panel">
+      <header>
+        <div><h2 id="panelTitle">Panel docente</h2><span class="by">Pictoteclas · Diseñado por David OZC</span></div>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn primary" id="closePanel" type="button">Volver a la actividad</button>
+      </header>
+      <nav class="tabs" role="tablist" aria-label="Secciones del panel" id="tabs"></nav>
+      <div class="tabbody" id="tabbody" role="tabpanel"></div>
+    </div>
+  </dialog>
+
+  <dialog id="picker" aria-labelledby="pickerTitle">
+    <div class="panel">
+      <header>
+        <h2 id="pickerTitle">Elegir pictograma</h2>
+        <div style="flex:1"></div>
+        <button class="btn" id="closePicker" type="button">Cancelar</button>
+      </header>
+      <nav class="tabs" role="tablist" aria-label="Origen del pictograma" id="ptabs"></nav>
+      <div class="tabbody" id="pbody" role="tabpanel"></div>
+    </div>
+  </dialog>
+</div>
+
+<script>
+"use strict";
+document.documentElement.lang = "es";
+/* ======================= DATOS BASE ======================= */
+const ICONS = {"agua":{"vb":"0 0 512 512","d":"<path d=\"M480 32H32C12.5 32-2.4 49.2.3 68.5l56 356.5c4.5 31.5 31.5 54.9 63.4 54.9h273c31.8 0 58.9-23.4 63.4-54.9l55.6-356.5C514.4 49.2 499.5 32 480 32zm-37.4 64l-30 192h-313L69.4 96h373.2z\"></path>","cat":"cosa"},"comer":{"vb":"0 0 416 512","d":"<path d=\"M207.9 15.2c.8 4.7 16.1 94.5 16.1 128.8 0 52.3-27.8 89.6-68.9 104.6L168 486.7c.7 13.7-10.2 25.3-24 25.3H80c-13.7 0-24.7-11.5-24-25.3l12.9-238.1C27.7 233.6 0 196.2 0 144 0 109.6 15.3 19.9 16.1 15.2 19.3-5.1 61.4-5.4 64 16.3v141.2c1.3 3.4 15.1 3.2 16 0 1.4-25.3 7.9-139.2 8-141.8 3.3-20.8 44.7-20.8 47.9 0 .2 2.7 6.6 116.5 8 141.8.9 3.2 14.8 3.4 16 0V16.3c2.6-21.6 44.8-21.4 48-1.1zm119.2 285.7l-15 185.1c-1.2 14 9.9 26 23.9 26h56c13.3 0 24-10.7 24-24V24c0-13.2-10.7-24-24-24-82.5 0-221.4 178.5-64.9 300.9z\"></path>","cat":"accion"},"baño":{"vb":"0 0 640 512","d":"<path d=\"M128 128c35.3 0 64-28.7 64-64S163.3 0 128 0 64 28.7 64 64s28.7 64 64 64zm384 0c35.3 0 64-28.7 64-64S547.3 0 512 0s-64 28.7-64 64 28.7 64 64 64zm127.3 226.5l-45.6-185.8c-3.3-13.5-15.5-23-29.8-24.2-15 9.7-32.8 15.5-52 15.5-19.2 0-37-5.8-52-15.5-14.3 1.2-26.5 10.7-29.8 24.2l-45.6 185.8C381 369.6 393 384 409.2 384H464v104c0 13.3 10.7 24 24 24h48c13.3 0 24-10.7 24-24V384h54.8c16.2 0 28.2-14.4 24.5-29.5zM336 0h-32c-8.8 0-16 7.2-16 16v480c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V16c0-8.8-7.2-16-16-16zM180.1 144.4c-15 9.8-32.9 15.6-52.1 15.6-19.2 0-37.1-5.8-52.1-15.6C51.3 146.5 32 166.9 32 192v136c0 13.3 10.7 24 24 24h8v136c0 13.3 10.7 24 24 24h80c13.3 0 24-10.7 24-24V352h8c13.3 0 24-10.7 24-24V192c0-25.1-19.3-45.5-43.9-47.6z\"></path>","cat":"cosa"},"ayuda":{"vb":"0 0 640 512","d":"<path d=\"M488 192H336v56c0 39.7-32.3 72-72 72s-72-32.3-72-72V126.4l-64.9 39C107.8 176.9 96 197.8 96 220.2v47.3l-80 46.2C.7 322.5-4.6 342.1 4.3 357.4l80 138.6c8.8 15.3 28.4 20.5 43.7 11.7L231.4 448H368c35.3 0 64-28.7 64-64h16c17.7 0 32-14.3 32-32v-64h8c13.3 0 24-10.7 24-24v-48c0-13.3-10.7-24-24-24zm147.7-37.4L555.7 16C546.9.7 527.3-4.5 512 4.3L408.6 64H306.4c-12 0-23.7 3.4-33.9 9.7L239 94.6c-9.4 5.8-15 16.1-15 27.1V248c0 22.1 17.9 40 40 40s40-17.9 40-40v-88h184c30.9 0 56 25.1 56 56v28.5l80-46.2c15.3-8.9 20.5-28.4 11.7-43.7z\"></path>","cat":"social"},"descansar":{"vb":"0 0 640 512","d":"<path d=\"M176 256c44.11 0 80-35.89 80-80s-35.89-80-80-80-80 35.89-80 80 35.89 80 80 80zm352-128H304c-8.84 0-16 7.16-16 16v144H64V80c0-8.84-7.16-16-16-16H16C7.16 64 0 71.16 0 80v352c0 8.84 7.16 16 16 16h32c8.84 0 16-7.16 16-16v-48h512v48c0 8.84 7.16 16 16 16h32c8.84 0 16-7.16 16-16V240c0-61.86-50.14-112-112-112z\"></path>","cat":"accion"},"jugar":{"vb":"0 0 512 512","d":"<path d=\"M128,256A128,128,0,1,0,256,384,128,128,0,0,0,128,256Zm379-54.86L400.07,18.29a37.26,37.26,0,0,0-64.14,0L229,201.14C214.76,225.52,232.58,256,261.09,256H474.91C503.42,256,521.24,225.52,507,201.14ZM480,288H320a32,32,0,0,0-32,32V480a32,32,0,0,0,32,32H480a32,32,0,0,0,32-32V320A32,32,0,0,0,480,288Z\"></path>","cat":"accion"},"música":{"vb":"0 0 512 512","d":"<path d=\"M470.38 1.51L150.41 96A32 32 0 0 0 128 126.51v261.41A139 139 0 0 0 96 384c-53 0-96 28.66-96 64s43 64 96 64 96-28.66 96-64V214.32l256-75v184.61a138.4 138.4 0 0 0-32-3.93c-53 0-96 28.66-96 64s43 64 96 64 96-28.65 96-64V32a32 32 0 0 0-41.62-30.49z\"></path>","cat":"cosa"},"cuento":{"vb":"0 0 576 512","d":"<path d=\"M542.22 32.05c-54.8 3.11-163.72 14.43-230.96 55.59-4.64 2.84-7.27 7.89-7.27 13.17v363.87c0 11.55 12.63 18.85 23.28 13.49 69.18-34.82 169.23-44.32 218.7-46.92 16.89-.89 30.02-14.43 30.02-30.66V62.75c.01-17.71-15.35-31.74-33.77-30.7zM264.73 87.64C197.5 46.48 88.58 35.17 33.78 32.05 15.36 31.01 0 45.04 0 62.75V400.6c0 16.24 13.13 29.78 30.02 30.66 49.49 2.6 149.59 12.11 218.77 46.95 10.62 5.35 23.21-1.94 23.21-13.46V100.63c0-5.29-2.62-10.14-7.27-12.99z\"></path>","cat":"cosa"},"pintar":{"vb":"0 0 512 512","d":"<path d=\"M167.02 309.34c-40.12 2.58-76.53 17.86-97.19 72.3-2.35 6.21-8 9.98-14.59 9.98-11.11 0-45.46-27.67-55.25-34.35C0 439.62 37.93 512 128 512c75.86 0 128-43.77 128-120.19 0-3.11-.65-6.08-.97-9.13l-88.01-73.34zM457.89 0c-15.16 0-29.37 6.71-40.21 16.45C213.27 199.05 192 203.34 192 257.09c0 13.7 3.25 26.76 8.73 38.7l63.82 53.18c7.21 1.8 14.64 3.03 22.39 3.03 62.11 0 98.11-45.47 211.16-256.46 7.38-14.35 13.9-29.85 13.9-45.99C512 20.64 486 0 457.89 0z\"></path>","cat":"accion"},"ordenador":{"vb":"0 0 640 512","d":"<path d=\"M624 416H381.54c-.74 19.81-14.71 32-32.74 32H288c-18.69 0-33.02-17.47-32.77-32H16c-8.8 0-16 7.2-16 16v16c0 35.2 28.8 64 64 64h512c35.2 0 64-28.8 64-64v-16c0-8.8-7.2-16-16-16zM576 48c0-26.4-21.6-48-48-48H112C85.6 0 64 21.6 64 48v336h512V48zm-64 272H128V64h384v256z\"></path>","cat":"cosa"},"patio":{"vb":"0 0 384 512","d":"<path d=\"M378.31 378.49L298.42 288h30.63c9.01 0 16.98-5 20.78-13.06 3.8-8.04 2.55-17.26-3.28-24.05L268.42 160h28.89c9.1 0 17.3-5.35 20.86-13.61 3.52-8.13 1.86-17.59-4.24-24.08L203.66 4.83c-6.03-6.45-17.28-6.45-23.32 0L70.06 122.31c-6.1 6.49-7.75 15.95-4.24 24.08C69.38 154.65 77.59 160 86.69 160h28.89l-78.14 90.91c-5.81 6.78-7.06 15.99-3.27 24.04C37.97 283 45.93 288 54.95 288h30.63L5.69 378.49c-6 6.79-7.36 16.09-3.56 24.26 3.75 8.05 12 13.25 21.01 13.25H160v24.45l-30.29 48.4c-5.32 10.64 2.42 23.16 14.31 23.16h95.96c11.89 0 19.63-12.52 14.31-23.16L224 440.45V416h136.86c9.01 0 17.26-5.2 21.01-13.25 3.8-8.17 2.44-17.47-3.56-24.26z\"></path>","cat":"cosa"},"casa":{"vb":"0 0 576 512","d":"<path d=\"M280.37 148.26L96 300.11V464a16 16 0 0 0 16 16l112.06-.29a16 16 0 0 0 15.92-16V368a16 16 0 0 1 16-16h64a16 16 0 0 1 16 16v95.64a16 16 0 0 0 16 16.05L464 480a16 16 0 0 0 16-16V300L295.67 148.26a12.19 12.19 0 0 0-15.3 0zM571.6 251.47L488 182.56V44.05a12 12 0 0 0-12-12h-56a12 12 0 0 0-12 12v72.61L318.47 43a48 48 0 0 0-61 0L4.34 251.47a12 12 0 0 0-1.6 16.9l25.5 31A12 12 0 0 0 45.15 301l235.22-193.74a12.19 12.19 0 0 1 15.3 0L530.9 301a12 12 0 0 0 16.9-1.6l25.5-31a12 12 0 0 0-1.7-16.93z\"></path>","cat":"cosa"},"cascos":{"vb":"0 0 512 512","d":"<path d=\"M256 32C114.52 32 0 146.496 0 288v48a32 32 0 0 0 17.689 28.622l14.383 7.191C34.083 431.903 83.421 480 144 480h24c13.255 0 24-10.745 24-24V280c0-13.255-10.745-24-24-24h-24c-31.342 0-59.671 12.879-80 33.627V288c0-105.869 86.131-192 192-192s192 86.131 192 192v1.627C427.671 268.879 399.342 256 368 256h-24c-13.255 0-24 10.745-24 24v176c0 13.255 10.745 24 24 24h24c60.579 0 109.917-48.098 111.928-108.187l14.382-7.191A32 32 0 0 0 512 336v-48c0-141.479-114.496-256-256-256z\"></path>","cat":"cosa"},"silencio":{"vb":"0 0 512 512","d":"<path d=\"M215.03 71.05L126.06 160H24c-13.26 0-24 10.74-24 24v144c0 13.25 10.74 24 24 24h102.06l88.97 88.95c15.03 15.03 40.97 4.47 40.97-16.97V88.02c0-21.46-25.96-31.98-40.97-16.97zM461.64 256l45.64-45.64c6.3-6.3 6.3-16.52 0-22.82l-22.82-22.82c-6.3-6.3-16.52-6.3-22.82 0L416 210.36l-45.64-45.64c-6.3-6.3-16.52-6.3-22.82 0l-22.82 22.82c-6.3 6.3-6.3 16.52 0 22.82L370.36 256l-45.63 45.63c-6.3 6.3-6.3 16.52 0 22.82l22.82 22.82c6.3 6.3 16.52 6.3 22.82 0L416 301.64l45.64 45.64c6.3 6.3 16.52 6.3 22.82 0l22.82-22.82c6.3-6.3 6.3-16.52 0-22.82L461.64 256z\"></path>","cat":"descripcion"},"sí":{"vb":"0 0 512 512","d":"<path d=\"M104 224H24c-13.255 0-24 10.745-24 24v240c0 13.255 10.745 24 24 24h80c13.255 0 24-10.745 24-24V248c0-13.255-10.745-24-24-24zM64 472c-13.255 0-24-10.745-24-24s10.745-24 24-24 24 10.745 24 24-10.745 24-24 24zM384 81.452c0 42.416-25.97 66.208-33.277 94.548h101.723c33.397 0 59.397 27.746 59.553 58.098.084 17.938-7.546 37.249-19.439 49.197l-.11.11c9.836 23.337 8.237 56.037-9.308 79.469 8.681 25.895-.069 57.704-16.382 74.757 4.298 17.598 2.244 32.575-6.148 44.632C440.202 511.587 389.616 512 346.839 512l-2.845-.001c-48.287-.017-87.806-17.598-119.56-31.725-15.957-7.099-36.821-15.887-52.651-16.178-6.54-.12-11.783-5.457-11.783-11.998v-213.77c0-3.2 1.282-6.271 3.558-8.521 39.614-39.144 56.648-80.587 89.117-113.111 14.804-14.832 20.188-37.236 25.393-58.902C282.515 39.293 291.817 0 312 0c24 0 72 8 72 81.452z\"></path>","cat":"social"},"no":{"vb":"0 0 512 512","d":"<path d=\"M0 56v240c0 13.255 10.745 24 24 24h80c13.255 0 24-10.745 24-24V56c0-13.255-10.745-24-24-24H24C10.745 32 0 42.745 0 56zm40 200c0-13.255 10.745-24 24-24s24 10.745 24 24-10.745 24-24 24-24-10.745-24-24zm272 256c-20.183 0-29.485-39.293-33.931-57.795-5.206-21.666-10.589-44.07-25.393-58.902-32.469-32.524-49.503-73.967-89.117-113.111a11.98 11.98 0 0 1-3.558-8.521V59.901c0-6.541 5.243-11.878 11.783-11.998 15.831-.29 36.694-9.079 52.651-16.178C256.189 17.598 295.709.017 343.995 0h2.844c42.777 0 93.363.413 113.774 29.737 8.392 12.057 10.446 27.034 6.148 44.632 16.312 17.053 25.063 48.863 16.382 74.757 17.544 23.432 19.143 56.132 9.308 79.469l.11.11c11.893 11.949 19.523 31.259 19.439 49.197-.156 30.352-26.157 58.098-59.553 58.098H350.723C358.03 364.34 384 388.132 384 430.548 384 504 336 512 312 512z\"></path>","cat":"social"},"más":{"vb":"0 0 448 512","d":"<path d=\"M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z\"></path>","cat":"otro"},"parar":{"vb":"0 0 448 512","d":"<path d=\"M408.781 128.007C386.356 127.578 368 146.36 368 168.79V256h-8V79.79c0-22.43-18.356-41.212-40.781-40.783C297.488 39.423 280 57.169 280 79v177h-8V40.79C272 18.36 253.644-.422 231.219.007 209.488.423 192 18.169 192 40v216h-8V80.79c0-22.43-18.356-41.212-40.781-40.783C121.488 40.423 104 58.169 104 80v235.992l-31.648-43.519c-12.993-17.866-38.009-21.817-55.877-8.823-17.865 12.994-21.815 38.01-8.822 55.877l125.601 172.705A48 48 0 0 0 172.073 512h197.59c22.274 0 41.622-15.324 46.724-37.006l26.508-112.66a192.011 192.011 0 0 0 5.104-43.975V168c.001-21.831-17.487-39.577-39.218-39.993z\"></path>","cat":"accion"},"terminado":{"vb":"0 0 512 512","d":"<path d=\"M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z\"></path>","cat":"otro"},"contento":{"vb":"0 0 496 512","d":"<path d=\"M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zM112 223.4c3.3-42.1 32.2-71.4 56-71.4s52.7 29.3 56 71.4c.7 8.6-10.8 11.9-14.9 4.5l-9.5-17c-7.7-13.7-19.2-21.6-31.5-21.6s-23.8 7.9-31.5 21.6l-9.5 17c-4.3 7.4-15.8 4-15.1-4.5zm250.8 122.8C334.3 380.4 292.5 400 248 400s-86.3-19.6-114.8-53.8c-13.5-16.3 11-36.7 24.6-20.5 22.4 26.9 55.2 42.2 90.2 42.2s67.8-15.4 90.2-42.2c13.6-16.2 38.1 4.3 24.6 20.5zm6.2-118.3l-9.5-17c-7.7-13.7-19.2-21.6-31.5-21.6s-23.8 7.9-31.5 21.6l-9.5 17c-4.1 7.3-15.6 4-14.9-4.5 3.3-42.1 32.2-71.4 56-71.4s52.7 29.3 56 71.4c.6 8.6-11 11.9-15.1 4.5z\"></path>","cat":"descripcion"},"triste":{"vb":"0 0 496 512","d":"<path d=\"M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm80 168c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zM152 416c-26.5 0-48-21-48-47 0-20 28.5-60.4 41.6-77.8 3.2-4.3 9.6-4.3 12.8 0C171.5 308.6 200 349 200 369c0 26-21.5 47-48 47zm16-176c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zm170.2 154.2C315.8 367.4 282.9 352 248 352c-21.2 0-21.2-32 0-32 44.4 0 86.3 19.6 114.7 53.8 13.8 16.4-11.2 36.5-24.5 20.4z\"></path>","cat":"descripcion"},"enfadado":{"vb":"0 0 496 512","d":"<path d=\"M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zM136 240c0-9.3 4.1-17.5 10.5-23.4l-31-9.3c-8.5-2.5-13.3-11.5-10.7-19.9 2.5-8.5 11.4-13.2 19.9-10.7l80 24c8.5 2.5 13.3 11.5 10.7 19.9-2.1 6.9-8.4 11.4-15.3 11.4-.5 0-1.1-.2-1.7-.2.7 2.7 1.7 5.3 1.7 8.2 0 17.7-14.3 32-32 32S136 257.7 136 240zm168 154.2c-27.8-33.4-84.2-33.4-112.1 0-13.5 16.3-38.2-4.2-24.6-20.5 20-24 49.4-37.8 80.6-37.8s60.6 13.8 80.6 37.8c13.8 16.5-11.1 36.6-24.5 20.5zm76.6-186.9l-31 9.3c6.3 5.8 10.5 14.1 10.5 23.4 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-2.9.9-5.6 1.7-8.2-.6.1-1.1.2-1.7.2-6.9 0-13.2-4.5-15.3-11.4-2.5-8.5 2.3-17.4 10.7-19.9l80-24c8.4-2.5 17.4 2.3 19.9 10.7 2.5 8.5-2.3 17.4-10.8 19.9z\"></path>","cat":"descripcion"},"cansado":{"vb":"0 0 496 512","d":"<path d=\"M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm33.8 189.7l80-48c11.6-6.9 24 7.7 15.4 18L343.6 208l33.6 40.3c8.7 10.4-3.9 24.8-15.4 18l-80-48c-7.7-4.7-7.7-15.9 0-20.6zm-163-30c-8.6-10.3 3.8-24.9 15.4-18l80 48c7.8 4.7 7.8 15.9 0 20.6l-80 48c-11.5 6.8-24-7.6-15.4-18l33.6-40.3-33.6-40.3zM248 288c51.9 0 115.3 43.8 123.2 106.7 1.7 13.6-8 24.6-17.7 20.4-25.9-11.1-64.4-17.4-105.5-17.4s-79.6 6.3-105.5 17.4c-9.8 4.2-19.4-7-17.7-20.4C132.7 331.8 196.1 288 248 288z\"></path>","cat":"descripcion"},"sorprendido":{"vb":"0 0 496 512","d":"<path d=\"M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zM136 208c0-17.7 14.3-32 32-32s32 14.3 32 32-14.3 32-32 32-32-14.3-32-32zm112 208c-35.3 0-64-28.7-64-64s28.7-64 64-64 64 28.7 64 64-28.7 64-64 64zm80-176c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32z\"></path>","cat":"descripcion"},"tranquilo":{"vb":"0 0 496 512","d":"<path d=\"M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm80 168c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zm-160 0c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zm194.8 170.2C334.3 380.4 292.5 400 248 400s-86.3-19.6-114.8-53.8c-13.6-16.3 11-36.7 24.6-20.5 22.4 26.9 55.2 42.2 90.2 42.2s67.8-15.4 90.2-42.2c13.4-16.2 38.1 4.2 24.6 20.5z\"></path>","cat":"descripcion"},"me duele":{"vb":"0 0 640 512","d":"<path d=\"M0 160v192c0 35.3 28.7 64 64 64h96V96H64c-35.3 0-64 28.7-64 64zm576-64h-96v320h96c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64zM192 416h256V96H192v320zm176-232c13.3 0 24 10.7 24 24s-10.7 24-24 24-24-10.7-24-24 10.7-24 24-24zm0 96c13.3 0 24 10.7 24 24s-10.7 24-24 24-24-10.7-24-24 10.7-24 24-24zm-96-96c13.3 0 24 10.7 24 24s-10.7 24-24 24-24-10.7-24-24 10.7-24 24-24zm0 96c13.3 0 24 10.7 24 24s-10.7 24-24 24-24-10.7-24-24 10.7-24 24-24z\"></path>","cat":"cosa"},"abrazo":{"vb":"0 0 576 512","d":"<path d=\"M275.3 250.5c7 7.4 18.4 7.4 25.5 0l108.9-114.2c31.6-33.2 29.8-88.2-5.6-118.8-30.8-26.7-76.7-21.9-104.9 7.7L288 36.9l-11.1-11.6C248.7-4.4 202.8-9.2 172 17.5c-35.3 30.6-37.2 85.6-5.6 118.8l108.9 114.2zm290 77.6c-11.8-10.7-30.2-10-42.6 0L430.3 402c-11.3 9.1-25.4 14-40 14H272c-8.8 0-16-7.2-16-16s7.2-16 16-16h78.3c15.9 0 30.7-10.9 33.3-26.6 3.3-20-12.1-37.4-31.6-37.4H192c-27 0-53.1 9.3-74.1 26.3L71.4 384H16c-8.8 0-16 7.2-16 16v96c0 8.8 7.2 16 16 16h356.8c14.5 0 28.6-4.9 40-14L564 377c15.2-12.1 16.4-35.3 1.3-48.9z\"></path>","cat":"social"},"abrir el grifo":{"vb":"0 0 512 512","d":"<path d=\"M352,256H313.39c-15.71-13.44-35.46-23.07-57.39-28V180.44l-32-3.38-32,3.38V228c-21.93,5-41.68,14.6-57.39,28H16A16,16,0,0,0,0,272v96a16,16,0,0,0,16,16h92.79C129.38,421.73,173,448,224,448s94.62-26.27,115.21-64H352a32,32,0,0,1,32,32,32,32,0,0,0,32,32h64a32,32,0,0,0,32-32A160,160,0,0,0,352,256ZM81.59,159.91l142.41-15,142.41,15c9.42,1,17.59-6.81,17.59-16.8V112.89c0-10-8.17-17.8-17.59-16.81L256,107.74V80a16,16,0,0,0-16-16H208a16,16,0,0,0-16,16v27.74L81.59,96.08C72.17,95.09,64,102.9,64,112.89v30.22C64,153.1,72.17,160.91,81.59,159.91Z\"></path>","cat":"accion"},"mojarse":{"vb":"0 0 352 512","d":"<path d=\"M205.22 22.09c-7.94-28.78-49.44-30.12-58.44 0C100.01 179.85 0 222.72 0 333.91 0 432.35 78.72 512 176 512s176-79.65 176-178.09c0-111.75-99.79-153.34-146.78-311.82zM176 448c-61.75 0-112-50.25-112-112 0-8.84 7.16-16 16-16s16 7.16 16 16c0 44.11 35.89 80 80 80 8.84 0 16 7.16 16 16s-7.16 16-16 16z\"></path>","cat":"accion"},"jabón":{"vb":"0 0 512 512","d":"<path d=\"M416,192a95.42,95.42,0,0,1-30.94,70.21A95.8,95.8,0,0,1,352,448H160a96,96,0,0,1,0-192h88.91A95.3,95.3,0,0,1,224,192H96A96,96,0,0,0,0,288V416a96,96,0,0,0,96,96H416a96,96,0,0,0,96-96V288A96,96,0,0,0,416,192Zm-96,64a64,64,0,1,0-64-64A64,64,0,0,0,320,256ZM208,96a48,48,0,1,0-48-48A48,48,0,0,0,208,96ZM384,64a32,32,0,1,0-32-32A32,32,0,0,0,384,64ZM160,288a64,64,0,0,0,0,128H352a64,64,0,0,0,0-128Z\"></path>","cat":"cosa"},"frotar":{"vb":"0 0 576 512","d":"<path d=\"M496,224a48,48,0,1,0-48-48A48,48,0,0,0,496,224ZM311.47,178.45A56.77,56.77,0,0,1,328,176a56,56,0,0,1,19,3.49l15.35-48.61A24,24,0,0,0,342,99.74c-11.53-1.35-22.21,6.44-25.71,17.51l-20.9,66.17ZM93.65,386.33c.8-.19,1.54-.54,2.35-.71V359.93a156,156,0,0,1,107.06-148l73.7-22.76L310.92,81.05a24,24,0,0,0-20.33-31.11c-11.53-1.34-22.22,6.45-25.72,17.52L231.42,173.88a8,8,0,0,1-15.26-4.83L259.53,31.26A24,24,0,0,0,239.2.15C227.67-1.19,217,6.6,213.49,17.66L165.56,169.37a8,8,0,1,1-15.26-4.82l38.56-122a24,24,0,0,0-20.33-31.11C157,10,146.32,17.83,142.82,28.9l-60,189.85L80.76,168.7A24,24,0,0,0,56.9,144.55c-13.23-.05-24.72,10.54-24.9,23.86V281.14A123.69,123.69,0,0,0,93.65,386.33ZM519.1,336H360a8,8,0,0,1,0-16H488a24,24,0,0,0,23.54-28.76C509.35,279.84,498.71,272,487.1,272H288l47.09-17.06a24,24,0,0,0-14.18-45.88L213.19,242.31A123.88,123.88,0,0,0,128,360v25.65a79.78,79.78,0,0,1,58,108.63A118.9,118.9,0,0,0,248,512H456a24,24,0,0,0,23.54-28.76C477.35,471.84,466.71,464,455.1,464H360a8,8,0,0,1,0-16H488a24,24,0,0,0,23.54-28.76C509.35,407.84,498.71,400,487.1,400H360a8,8,0,0,1,0-16H520a24,24,0,0,0,23.54-28.76C541.35,343.84,530.71,336,519.1,336ZM416,64a32,32,0,1,0-32-32A32,32,0,0,0,416,64ZM112,416a48,48,0,1,0,48,48A48,48,0,0,0,112,416Z\"></path>","cat":"accion"},"aclarar":{"vb":"0 0 576 512","d":"<path d=\"M562.1 383.9c-21.5-2.4-42.1-10.5-57.9-22.9-14.1-11.1-34.2-11.3-48.2 0-37.9 30.4-107.2 30.4-145.7-1.5-13.5-11.2-33-9.1-46.7 1.8-38 30.1-106.9 30-145.2-1.7-13.5-11.2-33.3-8.9-47.1 2-15.5 12.2-36 20.1-57.7 22.4-7.9.8-13.6 7.8-13.6 15.7v32.2c0 9.1 7.6 16.8 16.7 16 28.8-2.5 56.1-11.4 79.4-25.9 56.5 34.6 137 34.1 192 0 56.5 34.6 137 34.1 192 0 23.3 14.2 50.9 23.3 79.1 25.8 9.1.8 16.7-6.9 16.7-16v-31.6c.1-8-5.7-15.4-13.8-16.3zm0-144c-21.5-2.4-42.1-10.5-57.9-22.9-14.1-11.1-34.2-11.3-48.2 0-37.9 30.4-107.2 30.4-145.7-1.5-13.5-11.2-33-9.1-46.7 1.8-38 30.1-106.9 30-145.2-1.7-13.5-11.2-33.3-8.9-47.1 2-15.5 12.2-36 20.1-57.7 22.4-7.9.8-13.6 7.8-13.6 15.7v32.2c0 9.1 7.6 16.8 16.7 16 28.8-2.5 56.1-11.4 79.4-25.9 56.5 34.6 137 34.1 192 0 56.5 34.6 137 34.1 192 0 23.3 14.2 50.9 23.3 79.1 25.8 9.1.8 16.7-6.9 16.7-16v-31.6c.1-8-5.7-15.4-13.8-16.3zm0-144C540.6 93.4 520 85.4 504.2 73 490.1 61.9 470 61.7 456 73c-37.9 30.4-107.2 30.4-145.7-1.5-13.5-11.2-33-9.1-46.7 1.8-38 30.1-106.9 30-145.2-1.7-13.5-11.2-33.3-8.9-47.1 2-15.5 12.2-36 20.1-57.7 22.4-7.9.8-13.6 7.8-13.6 15.7v32.2c0 9.1 7.6 16.8 16.7 16 28.8-2.5 56.1-11.4 79.4-25.9 56.5 34.6 137 34.1 192 0 56.5 34.6 137 34.1 192 0 23.3 14.2 50.9 23.3 79.1 25.8 9.1.8 16.7-6.9 16.7-16v-31.6c.1-8-5.7-15.4-13.8-16.3z\"></path>","cat":"accion"},"secarse":{"vb":"0 0 512 512","d":"<path d=\"M156.7 256H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h142.2c15.9 0 30.8 10.9 33.4 26.6 3.3 20-12.1 37.4-31.6 37.4-14.1 0-26.1-9.2-30.4-21.9-2.1-6.3-8.6-10.1-15.2-10.1H81.6c-9.8 0-17.7 8.8-15.9 18.4 8.6 44.1 47.6 77.6 94.2 77.6 57.1 0 102.7-50.1 95.2-108.6C249 291 205.4 256 156.7 256zM16 224h336c59.7 0 106.8-54.8 93.8-116.7-7.6-36.2-36.9-65.5-73.1-73.1-55.4-11.6-105.1 24.9-114.9 75.5-1.9 9.6 6.1 18.3 15.8 18.3h32.8c6.7 0 13.1-3.8 15.2-10.1C325.9 105.2 337.9 96 352 96c19.4 0 34.9 17.4 31.6 37.4-2.6 15.7-17.4 26.6-33.4 26.6H16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16zm384 32H243.7c19.3 16.6 33.2 38.8 39.8 64H400c26.5 0 48 21.5 48 48s-21.5 48-48 48c-17.9 0-33.3-9.9-41.6-24.4-2.9-5-8.7-7.6-14.5-7.6h-33.8c-10.9 0-19 10.8-15.3 21.1 17.8 50.6 70.5 84.8 129.4 72.3 41.2-8.7 75.1-41.6 84.7-82.7C526 321.5 470.5 256 400 256z\"></path>","cat":"accion"},"sentarse":{"vb":"0 0 448 512","d":"<path d=\"M112 128c0-29.5 16.2-55 40-68.9V256h48V48h48v208h48V59.1c23.8 13.9 40 39.4 40 68.9v128h48V128C384 57.3 326.7 0 256 0h-64C121.3 0 64 57.3 64 128v128h48zm334.3 213.9l-10.7-32c-4.4-13.1-16.6-21.9-30.4-21.9H42.7c-13.8 0-26 8.8-30.4 21.9l-10.7 32C-5.2 362.6 10.2 384 32 384v112c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V384h256v112c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V384c21.8 0 37.2-21.4 30.3-42.1z\"></path>","cat":"accion"},"agenda":{"vb":"0 0 448 512","d":"<path d=\"M0 464c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V192H0v272zm320-196c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12v-40zm0 128c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12v-40zM192 268c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12v-40zm0 128c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12h-40c-6.6 0-12-5.4-12-12v-40zM64 268c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H76c-6.6 0-12-5.4-12-12v-40zm0 128c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H76c-6.6 0-12-5.4-12-12v-40zM400 64h-48V16c0-8.8-7.2-16-16-16h-32c-8.8 0-16 7.2-16 16v48H160V16c0-8.8-7.2-16-16-16h-32c-8.8 0-16 7.2-16 16v48H48C21.5 64 0 85.5 0 112v48h448v-48c0-26.5-21.5-48-48-48z\"></path>","cat":"cosa"},"trabajar":{"vb":"0 0 512 512","d":"<path d=\"M497.9 142.1l-46.1 46.1c-4.7 4.7-12.3 4.7-17 0l-111-111c-4.7-4.7-4.7-12.3 0-17l46.1-46.1c18.7-18.7 49.1-18.7 67.9 0l60.1 60.1c18.8 18.7 18.8 49.1 0 67.9zM284.2 99.8L21.6 362.4.4 483.9c-2.9 16.4 11.4 30.6 27.8 27.8l121.5-21.3 262.6-262.6c4.7-4.7 4.7-12.3 0-17l-111-111c-4.8-4.7-12.4-4.7-17.1 0zM124.1 339.9c-5.5-5.5-5.5-14.3 0-19.8l154-154c5.5-5.5 14.3-5.5 19.8 0s5.5 14.3 0 19.8l-154 154c-5.5 5.5-14.3 5.5-19.8 0zM88 424h48v36.3l-64.5 11.3-31.1-31.1L51.7 376H88v48z\"></path>","cat":"accion"},"fruta":{"vb":"0 0 448 512","d":"<path d=\"M350.85 129c25.97 4.67 47.27 18.67 63.92 42 14.65 20.67 24.64 46.67 29.96 78 4.67 28.67 4.32 57.33-1 86-7.99 47.33-23.97 87-47.94 119-28.64 38.67-64.59 58-107.87 58-10.66 0-22.3-3.33-34.96-10-8.66-5.33-18.31-8-28.97-8s-20.3 2.67-28.97 8c-12.66 6.67-24.3 10-34.96 10-43.28 0-79.23-19.33-107.87-58-23.97-32-39.95-71.67-47.94-119-5.32-28.67-5.67-57.33-1-86 5.32-31.33 15.31-57.33 29.96-78 16.65-23.33 37.95-37.33 63.92-42 15.98-2.67 37.95-.33 65.92 7 23.97 6.67 44.28 14.67 60.93 24 16.65-9.33 36.96-17.33 60.93-24 27.98-7.33 49.96-9.67 65.94-7zm-54.94-41c-9.32 8.67-21.65 15-36.96 19-10.66 3.33-22.3 5-34.96 5l-14.98-1c-1.33-9.33-1.33-20 0-32 2.67-24 10.32-42.33 22.97-55 9.32-8.67 21.65-15 36.96-19 10.66-3.33 22.3-5 34.96-5l14.98 1 1 15c0 12.67-1.67 24.33-4.99 35-3.99 15.33-10.31 27.67-18.98 37z\"></path>","cat":"cosa"},"merienda":{"vb":"0 0 512 512","d":"<path d=\"M510.52 255.82c-69.97-.85-126.47-57.69-126.47-127.86-70.17 0-127-56.49-127.86-126.45-27.26-4.14-55.13.3-79.72 12.82l-69.13 35.22a132.221 132.221 0 0 0-57.79 57.81l-35.1 68.88a132.645 132.645 0 0 0-12.82 80.95l12.08 76.27a132.521 132.521 0 0 0 37.16 72.96l54.77 54.76a132.036 132.036 0 0 0 72.71 37.06l76.71 12.15c27.51 4.36 55.7-.11 80.53-12.76l69.13-35.21a132.273 132.273 0 0 0 57.79-57.81l35.1-68.88c12.56-24.64 17.01-52.58 12.91-79.91zM176 368c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32zm32-160c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32zm160 128c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z\"></path>","cat":"cosa"},"guagua":{"vb":"0 0 512 512","d":"<path d=\"M488 128h-8V80c0-44.8-99.2-80-224-80S32 35.2 32 80v48h-8c-13.25 0-24 10.74-24 24v80c0 13.25 10.75 24 24 24h8v160c0 17.67 14.33 32 32 32v32c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32v-32h192v32c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32v-32h6.4c16 0 25.6-12.8 25.6-25.6V256h8c13.25 0 24-10.75 24-24v-80c0-13.26-10.75-24-24-24zM160 72c0-4.42 3.58-8 8-8h176c4.42 0 8 3.58 8 8v16c0 4.42-3.58 8-8 8H168c-4.42 0-8-3.58-8-8V72zm-48 328c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32zm128-112H128c-17.67 0-32-14.33-32-32v-96c0-17.67 14.33-32 32-32h112v160zm32 0V128h112c17.67 0 32 14.33 32 32v96c0 17.67-14.33 32-32 32H272zm128 112c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z\"></path>","cat":"cosa"},"profe":{"vb":"0 0 640 512","d":"<path d=\"M208 352c-2.39 0-4.78.35-7.06 1.09C187.98 357.3 174.35 360 160 360c-14.35 0-27.98-2.7-40.95-6.91-2.28-.74-4.66-1.09-7.05-1.09C49.94 352-.33 402.48 0 464.62.14 490.88 21.73 512 48 512h224c26.27 0 47.86-21.12 48-47.38.33-62.14-49.94-112.62-112-112.62zm-48-32c53.02 0 96-42.98 96-96s-42.98-96-96-96-96 42.98-96 96 42.98 96 96 96zM592 0H208c-26.47 0-48 22.25-48 49.59V96c23.42 0 45.1 6.78 64 17.8V64h352v288h-64v-64H384v64h-76.24c19.1 16.69 33.12 38.73 39.69 64H592c26.47 0 48-22.25 48-49.59V49.59C640 22.25 618.47 0 592 0z\"></path>","cat":"persona"},"yo":{"vb":"0 0 384 512","d":"<path d=\"M120 72c0-39.765 32.235-72 72-72s72 32.235 72 72c0 39.764-32.235 72-72 72s-72-32.236-72-72zm254.627 1.373c-12.496-12.497-32.758-12.497-45.254 0L242.745 160H141.254L54.627 73.373c-12.496-12.497-32.758-12.497-45.254 0-12.497 12.497-12.497 32.758 0 45.255L104 213.254V480c0 17.673 14.327 32 32 32h16c17.673 0 32-14.327 32-32V368h16v112c0 17.673 14.327 32 32 32h16c17.673 0 32-14.327 32-32V213.254l94.627-94.627c12.497-12.497 12.497-32.757 0-45.254z\"></path>","cat":"persona"},"amigos":{"vb":"0 0 640 512","d":"<path d=\"M192 256c61.9 0 112-50.1 112-112S253.9 32 192 32 80 82.1 80 144s50.1 112 112 112zm76.8 32h-8.3c-20.8 10-43.9 16-68.5 16s-47.6-6-68.5-16h-8.3C51.6 288 0 339.6 0 403.2V432c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48v-28.8c0-63.6-51.6-115.2-115.2-115.2zM480 256c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm48 32h-3.8c-13.9 4.8-28.6 8-44.2 8s-30.3-3.2-44.2-8H432c-20.4 0-39.2 5.9-55.7 15.4 24.4 26.3 39.7 61.2 39.7 99.8v38.4c0 2.2-.5 4.3-.6 6.4H592c26.5 0 48-21.5 48-48 0-61.9-50.1-112-112-112z\"></path>","cat":"persona"},"pelota":{"vb":"0 0 512 512","d":"<path d=\"M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zm-48 0l-.003-.282-26.064 22.741-62.679-58.5 16.454-84.355 34.303 3.072c-24.889-34.216-60.004-60.089-100.709-73.141l13.651 31.939L256 139l-74.953-41.525 13.651-31.939c-40.631 13.028-75.78 38.87-100.709 73.141l34.565-3.073 16.192 84.355-62.678 58.5-26.064-22.741-.003.282c0 43.015 13.497 83.952 38.472 117.991l7.704-33.897 85.138 10.447 36.301 77.826-29.902 17.786c40.202 13.122 84.29 13.148 124.572 0l-29.902-17.786 36.301-77.826 85.138-10.447 7.704 33.897C442.503 339.952 456 299.015 456 256zm-248.102 69.571l-29.894-91.312L256 177.732l77.996 56.527-29.622 91.312h-96.476z\"></path>","cat":"cosa"},"saludar":{"vb":"0 0 640 512","d":"<path d=\"M106.66,170.64l.09,0,49.55-20.65a7.32,7.32,0,0,0,3.68-6h0a7.29,7.29,0,0,0-3.68-6l-49.57-20.67-.07,0L86,67.68a6.66,6.66,0,0,0-11.92,0l-20.7,49.63-.05,0L3.7,138A7.29,7.29,0,0,0,0,144H0a7.32,7.32,0,0,0,3.68,6L53.27,170.6l.07,0L74,220.26a6.65,6.65,0,0,0,11.92,0l20.69-49.62ZM471.38,467.41l-1-.42-1-.5a38.67,38.67,0,0,1,0-69.14l1-.49,1-.43,37.49-15.63,15.63-37.48.41-1,.47-.95c3.85-7.74,10.58-13.63,18.35-17.34,0-1.33.25-2.69.27-4V144a32,32,0,0,0-64,0v72a8,8,0,0,1-8,8H456a8,8,0,0,1-8-8V64a32,32,0,0,0-64,0V216a8,8,0,0,1-8,8H360a8,8,0,0,1-8-8V32a32,32,0,0,0-64,0V216a8,8,0,0,1-8,8H264a8,8,0,0,1-8-8V64a32,32,0,0,0-64,0v241l-23.59-32.49a40,40,0,0,0-64.71,47.09L229.3,492.21A48.07,48.07,0,0,0,268.09,512H465.7c19.24,0,35.65-11.73,43.24-28.79l-.07-.17ZM349.79,339.52,320,351.93l-12.42,29.78a4,4,0,0,1-7.15,0L288,351.93l-29.79-12.41a4,4,0,0,1,0-7.16L288,319.94l12.42-29.78a4,4,0,0,1,7.15,0L320,319.94l29.79,12.42a4,4,0,0,1,0,7.16ZM640,431.91a7.28,7.28,0,0,0-3.68-6l-49.57-20.67-.07,0L566,355.63a6.66,6.66,0,0,0-11.92,0l-20.7,49.63-.05,0L483.7,426a7.28,7.28,0,0,0-3.68,6h0a7.29,7.29,0,0,0,3.68,5.95l49.57,20.67.07,0L554,508.21a6.65,6.65,0,0,0,11.92,0l20.69-49.62h0l.09,0,49.55-20.66a7.29,7.29,0,0,0,3.68-5.95h0Z\"></path>","cat":"social"},"estrella":{"vb":"0 0 576 512","d":"<path d=\"M259.3 17.8L194 150.2 47.9 171.5c-26.2 3.8-36.7 36.1-17.7 54.6l105.7 103-25 145.5c-4.5 26.3 23.2 46 46.4 33.7L288 439.6l130.7 68.7c23.2 12.2 50.9-7.4 46.4-33.7l-25-145.5 105.7-103c19-18.5 8.5-50.8-17.7-54.6L382 150.2 316.7 17.8c-11.7-23.6-45.6-23.9-57.4 0z\"></path>","cat":"otro"},"luz":{"vb":"0 0 352 512","d":"<path d=\"M96.06 454.35c.01 6.29 1.87 12.45 5.36 17.69l17.09 25.69a31.99 31.99 0 0 0 26.64 14.28h61.71a31.99 31.99 0 0 0 26.64-14.28l17.09-25.69a31.989 31.989 0 0 0 5.36-17.69l.04-38.35H96.01l.05 38.35zM0 176c0 44.37 16.45 84.85 43.56 115.78 16.52 18.85 42.36 58.23 52.21 91.45.04.26.07.52.11.78h160.24c.04-.26.07-.51.11-.78 9.85-33.22 35.69-72.6 52.21-91.45C335.55 260.85 352 220.37 352 176 352 78.61 272.91-.3 175.45 0 73.44.31 0 82.97 0 176zm176-80c-44.11 0-80 35.89-80 80 0 8.84-7.16 16-16 16s-16-7.16-16-16c0-61.76 50.24-112 112-112 8.84 0 16 7.16 16 16s-7.16 16-16 16z\"></path>","cat":"otro"},"corazón":{"vb":"0 0 512 512","d":"<path d=\"M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z\"></path>","cat":"otro"},"tambor":{"vb":"0 0 512 512","d":"<path d=\"M431.34 122.05l73.53-47.42a16 16 0 0 0 4.44-22.19l-8.87-13.31a16 16 0 0 0-22.19-4.44l-110.06 71C318.43 96.91 271.22 96 256 96 219.55 96 0 100.55 0 208.15v160.23c0 30.27 27.5 57.68 72 77.86v-101.9a24 24 0 1 1 48 0v118.93c33.05 9.11 71.07 15.06 112 16.73V376.39a24 24 0 1 1 48 0V480c40.93-1.67 78.95-7.62 112-16.73V344.34a24 24 0 1 1 48 0v101.9c44.5-20.18 72-47.59 72-77.86V208.15c0-43.32-35.76-69.76-80.66-86.1zM256 272.24c-114.88 0-208-28.69-208-64.09s93.12-64.08 208-64.08c17.15 0 33.73.71 49.68 1.91l-72.81 47a16 16 0 0 0-4.43 22.19l8.87 13.31a16 16 0 0 0 22.19 4.44l118.64-76.52C430.09 168 464 186.84 464 208.15c0 35.4-93.13 64.09-208 64.09z\"></path>","cat":"cosa"}};
+const KEYS = [
+  { id: "ArrowLeft", name: "Izquierda", glyph: "←" },
+  { id: "ArrowRight", name: "Derecha", glyph: "→" },
+  { id: "ArrowUp", name: "Arriba", glyph: "↑" },
+  { id: "ArrowDown", name: "Abajo", glyph: "↓" },
+  { id: "Space", name: "Espacio", glyph: "ESP" },
+  { id: "Click", name: "Clic", glyph: "CLIC" },
+  { id: "KeyW", name: "W (parte trasera)", glyph: "W" },
+  { id: "KeyA", name: "A (parte trasera)", glyph: "A" },
+  { id: "KeyS", name: "S (parte trasera)", glyph: "S" },
+  { id: "KeyD", name: "D (parte trasera)", glyph: "D" },
+  { id: "KeyF", name: "F (parte trasera)", glyph: "F" },
+  { id: "KeyG", name: "G (parte trasera)", glyph: "G" }
+];
+const KEY_BY_ID = Object.fromEntries(KEYS.map(k => [k.id, k]));
+const CATS = { persona: "Personas", accion: "Acciones", cosa: "Cosas y lugares", descripcion: "Cómo me siento / cómo es", social: "Social", otro: "Otros" };
+const MODES = {
+  comunicar: { name: "Comunicar", desc: "Cada tecla dice un pictograma. Para pedir, elegir o expresar." },
+  causa: { name: "Causa-efecto", desc: "Cualquier tecla produce luz, sonido y movimiento. Primer paso." },
+  pasos: { name: "Paso a paso", desc: "Agenda o rutina: → o Espacio avanza, ← retrocede." },
+  elegir: { name: "¿Dónde está?", desc: "Busca el pictograma. Sin errores: si falla, se le ayuda." }
+};
+let uid = 0; const nid = () => "c" + Date.now().toString(36) + (uid++).toString(36);
+const ic = (name) => ({ type: "icon", name });
+const cell = (name, label, key) => ({ id: nid(), picto: ic(name), label: label || name, say: "", audio: null, key: key || null });
+const DEFAULT_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Click", "KeyW", "KeyA", "KeyS", "KeyD", "KeyF", "KeyG"];
+function withKeys(cells) { cells.forEach((c, i) => { if (!c.key) c.key = DEFAULT_KEYS[i] || null; }); return cells; }
+
+function defaultState() {
+  return {
+    version: 1,
+    mode: "comunicar",
+    boards: {
+      necesidades: { name: "Necesidades", cells: withKeys([cell("agua"), cell("comer"), cell("baño"), cell("ayuda"), cell("descansar"), cell("jugar")]) },
+      emociones: { name: "¿Cómo me siento?", cells: withKeys([cell("contento"), cell("triste"), cell("enfadado"), cell("cansado")]) },
+      sino: { name: "Sí / No", cells: withKeys([cell("sí"), cell("no")]) },
+      recreo: { name: "¿A qué jugamos?", cells: withKeys([cell("pelota"), cell("música"), cell("cuento"), cell("pintar")]) }
+    },
+    activeBoard: "necesidades",
+    sequences: {
+      manos: { name: "Lavarse las manos", steps: [cell("abrir el grifo"), cell("mojarse"), cell("jabón", "coger jabón"), cell("frotar"), cell("aclarar"), cell("secarse")] },
+      llegada: { name: "Llegada a clase", steps: [cell("saludar"), cell("agenda", "mirar la agenda"), cell("sentarse"), cell("trabajar"), cell("terminado")] }
+    },
+    activeSeq: "manos",
+    causa: { picto: ic("estrella"), label: "estrella", effect: "estrellas", sound: "campana", speak: false },
+    elegir: { board: "necesidades", options: 2, model: "pictograma", helpAfter: 5 },
+    settings: { voice: true, rate: 0.9, voiceName: "", sound: true, volume: 0.6, motion: "auto", theme: "auto",
+      labels: true, upper: true, keys: true, cooldown: 700, labelSize: "normal" },
+    log: { since: new Date().toISOString(), comunicar: {}, causa: 0, pasos: 0, elegirSin: 0, elegirCon: 0 }
+  };
+}
+
+/* ======================= ESTADO Y GUARDADO ======================= */
+const STORE = "pictoteclas.v1";
+let S = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (raw) { const d = JSON.parse(raw); if (d && d.version === 1) return merge(defaultState(), d); }
+  } catch (e) { /* almacenamiento no disponible */ }
+  return defaultState();
+}
+function merge(base, d) {
+  const out = Object.assign(base, d);
+  out.settings = Object.assign(defaultState().settings, d.settings || {});
+  out.causa = Object.assign(defaultState().causa, d.causa || {});
+  out.elegir = Object.assign(defaultState().elegir, d.elegir || {});
+  out.log = Object.assign(defaultState().log, d.log || {});
+  if (!out.boards[out.activeBoard]) out.activeBoard = Object.keys(out.boards)[0];
+  if (!out.sequences[out.activeSeq]) out.activeSeq = Object.keys(out.sequences)[0];
+  if (!out.boards[out.elegir.board]) out.elegir.board = out.activeBoard;
+  return out;
+}
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(STORE, JSON.stringify(S)); }
+    catch (e) { toast("No se ha podido guardar en este navegador (almacenamiento lleno o bloqueado). Exporta la configuración desde «Guardar»."); }
+  }, 250);
+}
+
+/* ======================= UTILIDADES ======================= */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function catOf(p) { return p && p.type === "icon" && ICONS[p.name] ? ICONS[p.name].cat : (p && p.cat) || "otro"; }
+function pictoHTML(p, alt) {
+  if (!p) return "";
+  if (p.type === "icon" && ICONS[p.name]) return `<svg viewBox="${ICONS[p.name].vb}" aria-hidden="true" focusable="false">${ICONS[p.name].d}</svg>`;
+  if (p.type === "img") return `<img src="${esc(p.src)}" alt="${esc(alt || "")}" draggable="false">`;
+  return "";
+}
+let toastTimer = null;
+function toast(msg) {
+  let t = $(".toast");
+  if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4200);
+}
+function announce(text) { const l = $("#live"); l.textContent = ""; setTimeout(() => { l.textContent = text; }, 30); }
+function motionOn() {
+  if (S.settings.motion === "off") return false;
+  if (S.settings.motion === "on") return true;
+  return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/* ======================= SONIDO Y VOZ ======================= */
+let AC = null, master = null;
+function audio() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.connect(AC.destination); } catch (e) { return null; } }
+  if (AC.state === "suspended") AC.resume().catch(() => {});
+  master.gain.value = S.settings.volume;
+  return AC;
+}
+function tone(freq, start, dur, type = "sine", peak = 0.35) {
+  const ac = audio(); if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = freq;
+  const t = ac.currentTime + start;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+}
+function drum() {
+  const ac = audio(); if (!ac) return;
+  const len = ac.sampleRate * 0.25, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  f.type = "lowpass"; f.frequency.value = 500; g.gain.value = 0.9; src.buffer = buf; src.connect(f); f.connect(g); g.connect(master); src.start();
+  tone(90, 0, 0.3, "sine", 0.5);
+}
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880];
+function sfx(kind) {
+  if (!S.settings.sound) return;
+  if (kind === "campana") { tone(880, 0, 1.2, "sine", 0.25); tone(1320, 0.01, 0.9, "sine", 0.08); }
+  else if (kind === "tambor") drum();
+  else if (kind === "notas") tone(PENTA[Math.floor(Math.random() * PENTA.length)], 0, 0.7, "triangle", 0.3);
+  else if (kind === "pop") tone(660, 0, 0.18, "sine", 0.18);
+  else if (kind === "bien") { tone(523.25, 0, 0.35, "sine", 0.22); tone(659.25, 0.12, 0.35, "sine", 0.22); tone(783.99, 0.24, 0.6, "sine", 0.22); }
+  else if (kind === "fin") { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.14, 0.7, "sine", 0.2)); }
+}
+let voices = [];
+function loadVoices() { try { voices = speechSynthesis.getVoices().filter(v => /^es/i.test(v.lang)); } catch (e) { voices = []; } }
+if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+let currentAudio = null;
+function say(text, recorded) {
+  if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+  if (recorded) {
+    try { currentAudio = new Audio(recorded); currentAudio.volume = Math.min(1, S.settings.volume + 0.3); currentAudio.play().catch(() => {}); return; } catch (e) {}
+  }
+  if (!S.settings.voice || !text || !("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = "es-ES"; u.rate = S.settings.rate; u.volume = Math.min(1, S.settings.volume + 0.3);
+    const v = voices.find(v => v.name === S.settings.voiceName) || voices.find(v => /es-ES/i.test(v.lang)) || voices[0];
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ======================= EFECTOS VISUALES ======================= */
+const fx = $("#fx"), ctx = fx.getContext("2d"); let parts = [], fxRun = false;
+function sizeFx() { const r = window.devicePixelRatio || 1; fx.width = innerWidth * r; fx.height = innerHeight * r; ctx.setTransform(r, 0, 0, r, 0, 0); }
+addEventListener("resize", sizeFx); sizeFx();
+function burst(x, y, kind) {
+  if (!motionOn()) return;
+  const cs = getComputedStyle(document.documentElement);
+  const cols = ["--cat-persona", "--cat-accion", "--cat-cosa", "--cat-descripcion", "--cat-social"].map(v => cs.getPropertyValue(v).trim() || "#2C6E86");
+  const n = kind === "onda" ? 3 : 26;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 4;
+    parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (kind === "burbujas" ? 2 : 0), life: 1, kind, r: kind === "onda" ? 20 + i * 30 : 6 + Math.random() * 10, c: cols[i % cols.length] });
+  }
+  if (!fxRun) { fxRun = true; requestAnimationFrame(stepFx); }
+}
+function star(x, y, r) { ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 ? r * .45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); }
+function stepFx() {
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter(p => p.life > 0);
+  for (const p of parts) {
+    p.life -= p.kind === "onda" ? 0.018 : 0.014; ctx.globalAlpha = Math.max(0, p.life);
+    if (p.kind === "onda") { ctx.strokeStyle = p.c; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + (1 - p.life) * 260, 0, Math.PI * 2); ctx.stroke(); }
+    else { p.x += p.vx; p.y += p.vy; p.vy += p.kind === "burbujas" ? -0.03 : 0.06; ctx.fillStyle = p.c;
+      if (p.kind === "burbujas") { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); } else star(p.x, p.y, p.r); }
+  }
+  ctx.globalAlpha = 1;
+  if (parts.length) requestAnimationFrame(stepFx); else { fxRun = false; ctx.clearRect(0, 0, innerWidth, innerHeight); }
+}
+function burstAt(el, kind) { if (!el) return; const r = el.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, kind); }
+
+/* ======================= ESCENARIO ======================= */
+const stage = $("#stage");
+const run = { said: null, step: 0, choose: null };
+function applySettings() {
+  const app = $("#app"), st = S.settings;
+  app.dataset.sensory = st.theme === "auto" ? "" : st.theme;
+  if (st.theme === "auto") app.removeAttribute("data-sensory");
+  app.dataset.upper = String(st.upper); app.dataset.labels = String(st.labels); app.dataset.keys = String(st.keys);
+  app.dataset.motion = String(motionOn());
+  const sizes = { normal: "clamp(1.1rem, 3.2vmin, 2.4rem)", grande: "clamp(1.4rem, 4.4vmin, 3.2rem)", enorme: "clamp(1.8rem, 6vmin, 4.2rem)" };
+  app.style.setProperty("--lab-size", sizes[st.labelSize] || sizes.normal);
+}
+function bestGrid(n, w, h) {
+  let best = { cols: 1, rows: n, s: 0 };
+  for (let cols = 1; cols <= n; cols++) {
+    const rows = Math.ceil(n / cols); const s = Math.min(w / cols, (h / rows) * 1.05);
+    if (s > best.s + 0.5) best = { cols, rows, s };
+  }
+  return best;
+}
+function fitGrid(grid, n) {
+  const r = grid.getBoundingClientRect();
+  const g = bestGrid(n, Math.max(r.width, 200), Math.max(r.height, 150));
+  grid.style.setProperty("--cols", g.cols); grid.style.setProperty("--rows", g.rows);
+}
+function tileHTML(c, i, extra = "") {
+  const k = c.key && KEY_BY_ID[c.key];
+  return `<button type="button" tabindex="-1" class="tile cat-${catOf(c.picto)} ${extra}" data-i="${i}" aria-label="${esc(c.label)}${k ? " (tecla " + esc(k.name) + ")" : ""}">
+    ${k ? `<span class="key" aria-hidden="true">${k.glyph}</span>` : ""}
+    <span class="pic">${pictoHTML(c.picto, c.label)}</span><span class="lab" style="--w:${wordLen(c.label)}">${esc(c.label)}</span></button>`;
+}
+function wordLen(t) { return Math.max(6, ...String(t || "").split(/\s+/).map(w => w.length)); }
+function render() {
+  applySettings();
+  $("#activityName").textContent = activityName();
+  const m = S.mode;
+  if (m === "comunicar") renderComunicar();
+  else if (m === "causa") renderCausa();
+  else if (m === "pasos") renderPasos();
+  else renderElegir();
+}
+function activityName() {
+  if (S.mode === "comunicar") return "Comunicar · " + S.boards[S.activeBoard].name;
+  if (S.mode === "pasos") return "Paso a paso · " + S.sequences[S.activeSeq].name;
+  if (S.mode === "elegir") return "¿Dónde está? · " + S.boards[S.elegir.board].name;
+  return "Causa-efecto";
+}
+function renderComunicar() {
+  const b = S.boards[S.activeBoard];
+  const said = run.said;
+  stage.innerHTML = `<div class="said" aria-hidden="true">${said ? `<span class="mini">${pictoHTML(said.picto)}</span><span class="bigword">${esc(said.label)}</span>` : `<span class="empty">Pulsa una tecla o toca un pictograma</span>`}</div>
+    <div class="grid" id="grid">${b.cells.map((c, i) => tileHTML(c, i)).join("")}</div>`;
+  fitGrid($("#grid"), b.cells.length);
+}
+function renderCausa() {
+  const c = S.causa;
+  stage.innerHTML = `<div class="cause"><button type="button" tabindex="-1" class="tile cat-${catOf(c.picto)}" data-i="0" aria-label="${esc(c.label)}">
+    <span class="pic">${pictoHTML(c.picto, c.label)}</span><span class="lab" style="--w:${wordLen(c.label)}">${esc(c.label)}</span></button></div>
+    <p class="keyhelp">Cualquier tecla de la Makey Makey o un toque</p>`;
+}
+function renderPasos() {
+  const s = S.sequences[S.activeSeq]; const n = s.steps.length;
+  const i = Math.min(run.step, n);
+  const finished = i >= n;
+  const cur = finished ? { picto: ic("terminado"), label: "¡Terminado!" } : s.steps[i];
+  stage.innerHTML = `<div class="seq">
+      <div class="current">${tileHTML(cur, 0)}</div>
+      <div class="strip" aria-label="Pasos">${s.steps.map((st, k) => `<div class="step cat-${catOf(st.picto)} ${k < i ? "done" : ""} ${k === i ? "now" : ""}" title="${esc(st.label)}"><span class="n">${k + 1}</span>${pictoHTML(st.picto, st.label)}</div>`).join("")}</div>
+    </div>
+    <p class="keyhelp">${finished ? "→, Espacio o Clic: empezar otra vez" : "→, Espacio o Clic: siguiente · ←: anterior"}</p>`;
+}
+function newRound() {
+  const b = S.boards[S.elegir.board];
+  const pool = b.cells.slice();
+  const n = Math.max(2, Math.min(S.elegir.options, pool.length));
+  // opciones: las n primeras fichas del tablero (mismas teclas siempre: ayuda a la memoria motora)
+  const opts = pool.slice(0, n);
+  let target;
+  do { target = Math.floor(Math.random() * n); } while (run.choose && n > 1 && target === run.choose.target && Math.random() < 0.7);
+  run.choose = { opts, target, helped: false, done: false, count: (run.choose ? run.choose.count : 0) };
+}
+let helpTimer = null;
+function renderElegir() {
+  if (!run.choose) newRound();
+  const ch = run.choose, t = ch.opts[ch.target];
+  const showPic = S.elegir.model === "pictograma";
+  stage.innerHTML = `<div class="choose">
+     <div class="model"><span class="ask">¿Dónde está…?</span>${showPic ? `<span class="mini cat-${catOf(t.picto)}">${pictoHTML(t.picto, t.label)}</span>` : ""}<span class="ask bigword">${esc(t.label)}</span></div>
+     <div class="grid" id="grid">${ch.opts.map((c, i) => tileHTML(c, i)).join("")}</div>
+   </div>
+   <div class="dots" aria-hidden="true">${[0, 1, 2, 3, 4].map(k => `<i class="${k < ch.count % 5 || (ch.count % 5 === 0 && ch.count > 0 && ch.done) ? "on" : ""}"></i>`).join("")}</div>`;
+  fitGrid($("#grid"), ch.opts.length);
+  scheduleHelp();
+}
+function scheduleHelp() {
+  clearTimeout(helpTimer);
+  if (S.mode !== "elegir" || !S.elegir.helpAfter || run.choose.done) return;
+  helpTimer = setTimeout(() => showHelp(), S.elegir.helpAfter * 1000);
+}
+function showHelp() {
+  if (!run.choose || run.choose.done) return;
+  run.choose.helped = true;
+  const el = stage.querySelector(`.tile[data-i="${run.choose.target}"]`);
+  stage.querySelectorAll(".tile").forEach(x => { if (x !== el) x.classList.add("dim"); });
+  if (el) el.classList.add("prompt");
+  const t = run.choose.opts[run.choose.target];
+  say("Busca: " + (t.say || t.label));
+}
+
+/* ======================= ACCIONES ======================= */
+let lockUntil = 0;
+function trigger(keyId, tileIndex) {
+  const now = performance.now();
+  if (now < lockUntil) return;
+  lockUntil = now + S.settings.cooldown;
+  wake();
+  if (S.mode === "comunicar") {
+    const cells = S.boards[S.activeBoard].cells;
+    const i = tileIndex != null ? tileIndex : cells.findIndex(c => c.key === keyId);
+    if (i < 0) return;
+    const c = cells[i];
+    run.said = c;
+    renderComunicar();
+    const el = stage.querySelector(`.tile[data-i="${i}"]`);
+    if (el) { el.classList.add("hit"); setTimeout(() => el.classList.remove("hit"), 900); }
+    say(c.say || c.label, c.audio);
+    if (!c.audio && !S.settings.voice) sfx("pop");
+    announce(c.label);
+    S.log.comunicar[c.label] = (S.log.comunicar[c.label] || 0) + 1; save();
+  } else if (S.mode === "causa") {
+    const el = stage.querySelector(".tile");
+    if (el) { el.classList.add("hit"); setTimeout(() => el.classList.remove("hit"), 700); }
+    burstAt(el, S.causa.effect);
+    if (S.causa.sound !== "ninguno") sfx(S.causa.sound);
+    if (S.causa.speak) say(S.causa.label);
+    S.log.causa++; save();
+  } else if (S.mode === "pasos") {
+    const s = S.sequences[S.activeSeq]; const n = s.steps.length;
+    const back = keyId === "ArrowLeft";
+    if (back) { run.step = Math.max(0, run.step - 1); }
+    else if (run.step >= n) { run.step = 0; }
+    else { run.step++; }
+    renderPasos();
+    if (run.step >= n) {
+      burstAt(stage.querySelector(".tile"), "estrellas"); sfx("fin"); say("¡Terminado!"); announce("Terminado");
+      if (!back) { S.log.pasos++; save(); }
+    } else { const st = s.steps[run.step]; say(st.say || st.label, st.audio); announce(st.label); if (!st.audio && !S.settings.voice) sfx("pop"); }
+  } else if (S.mode === "elegir") {
+    const ch = run.choose; if (!ch || ch.done) return;
+    const i = tileIndex != null ? tileIndex : ch.opts.findIndex(c => c.key === keyId);
+    if (i < 0) return;
+    if (i === ch.target) {
+      ch.done = true; clearTimeout(helpTimer);
+      const el = stage.querySelector(`.tile[data-i="${i}"]`);
+      stage.querySelectorAll(".tile").forEach(x => x.classList.remove("prompt", "dim"));
+      if (el) el.classList.add("hit");
+      burstAt(el, "estrellas"); sfx("bien");
+      const t = ch.opts[i]; say("¡Sí! " + (t.say || t.label));
+      announce("Correcto: " + t.label);
+      if (ch.helped) S.log.elegirCon++; else S.log.elegirSin++;
+      ch.count++; save();
+      const dots = stage.querySelectorAll(".dots i"); dots.forEach((d, k) => d.classList.toggle("on", k < (ch.count % 5 || 5)));
+      setTimeout(() => { if (S.mode === "elegir") { newRound(); renderElegir(); speakTarget(); } }, 1900);
+    } else {
+      // sin sonido de error: se ofrece ayuda (aprendizaje sin error)
+      showHelp();
+    }
+  }
+}
+function speakTarget() { if (!run.choose) return; const t = run.choose.opts[run.choose.target]; say("¿Dónde está " + (t.say || t.label) + "?"); }
+
+/* teclado (Makey Makey = teclado) */
+const PANEL_OPEN = () => $("#panel").open || $("#picker").open;
+let lastKeyShown = null;
+document.addEventListener("keydown", (e) => {
+  if (PANEL_OPEN()) {
+    if (KEY_BY_ID[e.code] && lastKeyShown) lastKeyShown.textContent = "Última entrada detectada: " + KEY_BY_ID[e.code].glyph + " · " + KEY_BY_ID[e.code].name;
+    return;
+  }
+  if (e.key === "Escape") { e.preventDefault(); openPanel(); return; }
+  if (!KEY_BY_ID[e.code]) return;
+  e.preventDefault();               // evita que Espacio pulse botones o que las flechas desplacen la página
+  if (e.repeat) return;             // mantener el contacto en la Makey Makey repite la tecla: se ignora
+  trigger(e.code);
+});
+document.addEventListener("keyup", (e) => { if (!PANEL_OPEN() && KEY_BY_ID[e.code]) e.preventDefault(); });
+
+/* clic / toque */
+stage.addEventListener("click", (e) => {
+  if (PANEL_OPEN()) return;
+  const t = e.target.closest(".tile");
+  if (t && (S.mode === "comunicar" || S.mode === "elegir")) {
+    // en «¿Dónde está?» con la ficha central de pasos/causa se trata como clic general
+    trigger(null, Number(t.dataset.i));
+  } else {
+    trigger("Click");
+  }
+});
+
+/* ======================= PANTALLA COMPLETA Y PANTALLA ENCENDIDA ======================= */
+$("#fsBtn").addEventListener("click", async () => {
+  try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); }
+  catch (e) { toast("La pantalla completa no está disponible en esta vista."); }
+});
+let wakeLock = null;
+async function wake() { try { if (!wakeLock && navigator.wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch (e) {} }
+
+/* ======================= BOTÓN DOCENTE (mantener pulsado) ======================= */
+const gear = $("#gearBtn"); let holdT = null, holdStart = 0, holdRaf = null;
+function holdTick() { const p = Math.min(1, (performance.now() - holdStart) / 1000); gear.style.setProperty("--p", p); if (p >= 1) { endHold(); openPanel(); } else holdRaf = requestAnimationFrame(holdTick); }
+function endHold() { cancelAnimationFrame(holdRaf); gear.style.setProperty("--p", 0); }
+gear.addEventListener("pointerdown", (e) => { e.preventDefault(); holdStart = performance.now(); holdRaf = requestAnimationFrame(holdTick); });
+["pointerup", "pointerleave", "pointercancel"].forEach(ev => gear.addEventListener(ev, endHold));
+gear.addEventListener("click", (e) => { if (e.detail === 0) openPanel(); else if (!$("#panel").open) toast("Mantén pulsado el engranaje 1 segundo (o pulsa Esc) para abrir el panel docente."); });
+gear.addEventListener("contextmenu", e => e.preventDefault());
+
+/* ======================= PANEL DOCENTE ======================= */
+const TABS = [["actividad", "Actividad"], ["tableros", "Tableros"], ["secuencias", "Secuencias"], ["sensorial", "Sensorial"], ["registro", "Registro"], ["guardar", "Guardar"], ["ayuda", "Ayuda"]];
+let tab = "actividad";
+function openPanel() { if ("speechSynthesis" in window) try { speechSynthesis.cancel(); } catch (e) {} clearTimeout(helpTimer); renderTabs(); $("#panel").showModal(); }
+$("#closePanel").addEventListener("click", () => $("#panel").close());
+$("#panel").addEventListener("close", () => { run.choose = null; run.step = Math.min(run.step, 999); render(); if (S.mode === "elegir") speakTarget(); });
+function renderTabs() {
+  $("#tabs").innerHTML = TABS.map(([id, n]) => `<button role="tab" type="button" id="tab-${id}" aria-selected="${id === tab}" data-tab="${id}">${n}</button>`).join("");
+  $("#tabs").onclick = (e) => { const b = e.target.closest("[data-tab]"); if (b) { tab = b.dataset.tab; renderTabs(); } };
+  const body = $("#tabbody"); body.setAttribute("aria-labelledby", "tab-" + tab);
+  ({ actividad: tabActividad, tableros: tabTableros, secuencias: tabSecuencias, sensorial: tabSensorial, registro: tabRegistro, guardar: tabGuardar, ayuda: tabAyuda })[tab](body);
+}
+const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(label)}</option>`;
+function boardOptions(cur) { return Object.entries(S.boards).map(([id, b]) => opt(id, `${b.name} (${b.cells.length})`, cur)).join(""); }
+
+function tabActividad(body) {
+  body.innerHTML = `
+    <div><h3>¿Qué actividad hacemos?</h3><p>El alumnado solo ve la actividad elegida. Las teclas de la Makey Makey funcionan como un teclado.</p></div>
+    <div class="cards" id="modes">${Object.entries(MODES).map(([id, m]) => `<button type="button" class="mcard" aria-pressed="${S.mode === id}" data-mode="${id}"><b>${m.name}</b><small>${m.desc}</small></button>`).join("")}</div>
+    <div id="modecfg" class="cfg"></div>
+    <div><h3>Comprobar las conexiones</h3><p>Toca cada pinza (sin soltar la tierra) y mira qué entrada llega al ordenador.</p></div>
+    <div class="keytest" id="keytest">Última entrada detectada: ninguna</div>`;
+  lastKeyShown = $("#keytest");
+  $("#modes").onclick = (e) => { const b = e.target.closest("[data-mode]"); if (!b) return; S.mode = b.dataset.mode; run.choose = null; run.step = 0; save(); tabActividad(body); };
+  const c = $("#modecfg");
+  if (S.mode === "comunicar") {
+    c.innerHTML = `<label class="field"><span>Tablero</span><select id="cBoard">${boardOptions(S.activeBoard)}</select></label>
+      <p>Para cambiar pictogramas, palabras, voz o teclas, ve a «Tableros».</p>`;
+    $("#cBoard").onchange = (e) => { S.activeBoard = e.target.value; run.said = null; save(); };
+  } else if (S.mode === "causa") {
+    c.innerHTML = `<div class="field"><span>Pictograma</span><div class="row"><span class="item" style="display:flex;padding:6px"><span class="thumb cat-${catOf(S.causa.picto)}" id="cPic">${pictoHTML(S.causa.picto)}</span></span><button class="btn" id="cPicBtn" type="button">Cambiar</button></div></div>
+      <label class="field"><span>Palabra</span><input type="text" id="cLab" value="${esc(S.causa.label)}"></label>
+      <label class="field"><span>Efecto visual</span><select id="cFx">${opt("estrellas", "Estrellas", S.causa.effect)}${opt("burbujas", "Burbujas", S.causa.effect)}${opt("onda", "Ondas (más tranquilo)", S.causa.effect)}</select></label>
+      <label class="field"><span>Sonido</span><select id="cSnd">${opt("campana", "Campana suave", S.causa.sound)}${opt("notas", "Notas musicales", S.causa.sound)}${opt("tambor", "Tambor", S.causa.sound)}${opt("ninguno", "Sin sonido", S.causa.sound)}</select></label>
+      <label class="field"><span>Decir la palabra</span><select id="cSpk">${opt("false", "No", S.causa.speak)}${opt("true", "Sí", S.causa.speak)}</select></label>`;
+    $("#cPicBtn").onclick = () => openPicker((p) => { S.causa.picto = p; save(); tabActividad(body); });
+    $("#cLab").oninput = (e) => { S.causa.label = e.target.value; save(); };
+    $("#cFx").onchange = (e) => { S.causa.effect = e.target.value; save(); };
+    $("#cSnd").onchange = (e) => { S.causa.sound = e.target.value; save(); sfx(e.target.value); };
+    $("#cSpk").onchange = (e) => { S.causa.speak = e.target.value === "true"; save(); };
+  } else if (S.mode === "pasos") {
+    c.innerHTML = `<label class="field"><span>Secuencia</span><select id="sSeq">${Object.entries(S.sequences).map(([id, s]) => opt(id, `${s.name} (${s.steps.length} pasos)`, S.activeSeq)).join("")}</select></label>
+      <p>Siguiente: → , Espacio o Clic. Anterior: ←. Al terminar, vuelve a empezar.</p>`;
+    $("#sSeq").onchange = (e) => { S.activeSeq = e.target.value; run.step = 0; save(); };
+  } else {
+    c.innerHTML = `<label class="field"><span>Tablero del que salen las opciones</span><select id="eBoard">${boardOptions(S.elegir.board)}</select></label>
+      <label class="field"><span>Número de opciones</span><select id="eOpts">${opt(2, "2 (inicial)", S.elegir.options)}${opt(3, "3", S.elegir.options)}${opt(4, "4 (avanzado)", S.elegir.options)}</select></label>
+      <label class="field"><span>Modelo</span><select id="eModel">${opt("pictograma", "Pictograma y palabra (emparejar iguales)", S.elegir.model)}${opt("palabra", "Solo palabra y voz (más difícil)", S.elegir.model)}</select></label>
+      <label class="field"><span>Ayuda automática</span><select id="eHelp">${opt(0, "Solo si se equivoca", S.elegir.helpAfter)}${opt(3, "A los 3 segundos", S.elegir.helpAfter)}${opt(5, "A los 5 segundos", S.elegir.helpAfter)}${opt(8, "A los 8 segundos", S.elegir.helpAfter)}</select></label>
+      <p>Las opciones son las primeras fichas del tablero, siempre en la misma tecla. Si se equivoca no suena ningún error: la opción correcta se resalta y la voz repite la palabra.</p>`;
+    $("#eBoard").onchange = (e) => { S.elegir.board = e.target.value; run.choose = null; save(); };
+    $("#eOpts").onchange = (e) => { S.elegir.options = Number(e.target.value); run.choose = null; save(); };
+    $("#eModel").onchange = (e) => { S.elegir.model = e.target.value; save(); };
+    $("#eHelp").onchange = (e) => { S.elegir.helpAfter = Number(e.target.value); save(); };
+  }
+}
+
+/* ---- editor de fichas (tableros y secuencias) ---- */
+function itemEditor(list, cellsArr, withKey, onChange) {
+  list.innerHTML = cellsArr.map((c, i) => `
+    <div class="item" data-i="${i}">
+      <button type="button" class="thumb cat-${catOf(c.picto)}" data-act="pic" aria-label="Cambiar pictograma de ${esc(c.label)}">${pictoHTML(c.picto)}</button>
+      <div class="fields">
+        <label class="field"><span>Palabra en la ficha</span><input type="text" data-f="label" value="${esc(c.label)}"></label>
+        <label class="field"><span>Lo que dice la voz (si es distinto)</span><input type="text" data-f="say" value="${esc(c.say)}" placeholder="${esc(c.label)}"></label>
+        ${withKey ? `<label class="field"><span>Tecla de la Makey Makey</span><select data-f="key">${opt("", "Sin tecla (solo táctil)", c.key || "")}${KEYS.map(k => opt(k.id, k.glyph + " · " + k.name, c.key)).join("")}</select></label>` : ""}
+        <div class="field"><span>Voz grabada</span><div class="row">${c.audio ? `<span class="pill">Con grabación</span><button class="btn" type="button" data-act="play">Escuchar</button><button class="btn" type="button" data-act="noaudio">Quitar</button>` : `<button class="btn" type="button" data-act="rec">Grabar</button><label class="btn" style="display:inline-grid;place-items:center">Subir audio<input type="file" accept="audio/*" data-act="upaudio" hidden></label>`}</div></div>
+      </div>
+      <div class="acts">
+        <button class="btn" type="button" data-act="up" ${i === 0 ? "disabled" : ""} aria-label="Subir">↑ Subir</button>
+        <button class="btn" type="button" data-act="down" ${i === cellsArr.length - 1 ? "disabled" : ""} aria-label="Bajar">↓ Bajar</button>
+        <button class="btn danger" type="button" data-act="del" ${cellsArr.length <= 1 ? "disabled" : ""}>Quitar</button>
+      </div>
+    </div>`).join("");
+  list.oninput = (e) => {
+    const it = e.target.closest(".item"); if (!it || !e.target.dataset.f) return;
+    const c = cellsArr[Number(it.dataset.i)]; c[e.target.dataset.f] = e.target.value || (e.target.dataset.f === "key" ? null : ""); save();
+  };
+  list.onchange = async (e) => {
+    const it = e.target.closest(".item"); if (!it) return; const i = Number(it.dataset.i);
+    if (e.target.dataset.f === "key") {
+      const k = e.target.value || null;
+      if (k) cellsArr.forEach((o, j) => { if (j !== i && o.key === k) o.key = null; }); // una tecla, una ficha
+      cellsArr[i].key = k; save(); onChange(); return;
+    }
+    if (e.target.dataset.act === "upaudio" && e.target.files[0]) {
+      const f = e.target.files[0];
+      if (f.size > 700 * 1024) { toast("El audio es demasiado grande (máx. 700 KB). Graba una frase corta."); return; }
+      cellsArr[i].audio = await fileToDataURL(f); save(); onChange();
+    }
+  };
+  list.onclick = async (e) => {
+    const b = e.target.closest("[data-act]"); if (!b || b.tagName === "INPUT") return;
+    const it = b.closest(".item"); const i = Number(it.dataset.i); const a = b.dataset.act;
+    if (a === "pic") openPicker((p) => { cellsArr[i].picto = p; if (p.label && (!cellsArr[i].label || cellsArr[i].label === "nuevo")) cellsArr[i].label = p.label; save(); onChange(); });
+    if (a === "up" && i > 0) { [cellsArr[i - 1], cellsArr[i]] = [cellsArr[i], cellsArr[i - 1]]; save(); onChange(); }
+    if (a === "down" && i < cellsArr.length - 1) { [cellsArr[i + 1], cellsArr[i]] = [cellsArr[i], cellsArr[i + 1]]; save(); onChange(); }
+    if (a === "del" && cellsArr.length > 1) { cellsArr.splice(i, 1); save(); onChange(); }
+    if (a === "play") say("", cellsArr[i].audio);
+    if (a === "noaudio") { cellsArr[i].audio = null; save(); onChange(); }
+    if (a === "rec") recordInto(cellsArr[i], b, onChange);
+  };
+}
+function fileToDataURL(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+async function recordInto(c, btn, onChange) {
+  if (!navigator.mediaDevices || !window.MediaRecorder) { toast("Este navegador no permite grabar aquí. Usa «Subir audio» con una grabación del móvil."); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { toast("No hay acceso al micrófono en esta vista. Usa «Subir audio» o abre la app desde GitHub Pages."); return; }
+  const rec = new MediaRecorder(stream); const chunks = [];
+  rec.ondataavailable = (ev) => chunks.push(ev.data);
+  rec.onstop = async () => { stream.getTracks().forEach(t => t.stop()); const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" }); c.audio = await fileToDataURL(blob); save(); onChange(); toast("Grabación guardada."); };
+  rec.start(); btn.textContent = "Parar (máx. 4 s)"; btn.dataset.act = "";
+  btn.onclick = () => { if (rec.state === "recording") rec.stop(); };
+  setTimeout(() => { if (rec.state === "recording") rec.stop(); }, 4000);
+}
+
+function tabTableros(body) {
+  const id = S._editBoard && S.boards[S._editBoard] ? S._editBoard : S.activeBoard; S._editBoard = id;
+  const b = S.boards[id];
+  body.innerHTML = `
+    <div class="row"><label class="field" style="flex:1 1 220px"><span>Tablero que editas</span><select id="bSel">${boardOptions(id)}</select></label>
+      <label class="field" style="flex:1 1 220px"><span>Nombre del tablero</span><input type="text" id="bName" value="${esc(b.name)}"></label></div>
+    <div class="row"><button class="btn primary" type="button" id="bAdd" ${b.cells.length >= 12 ? "disabled" : ""}>Añadir ficha</button>
+      <button class="btn" type="button" id="bUse">Usar este tablero ahora</button>
+      <button class="btn" type="button" id="bNew">Nuevo tablero (copia)</button>
+      <button class="btn danger" type="button" id="bDel" ${Object.keys(S.boards).length <= 1 ? "disabled" : ""}>Borrar tablero</button></div>
+    <p>Máximo 12 fichas: 6 en la parte delantera de la Makey Makey (flechas, Espacio y Clic) y 6 en la trasera (W, A, S, D, F, G). Cada tecla solo puede estar en una ficha.</p>
+    <div class="list" id="bList"></div>`;
+  const re = () => tabTableros(body);
+  itemEditor($("#bList"), b.cells, true, re);
+  $("#bSel").onchange = (e) => { S._editBoard = e.target.value; re(); };
+  $("#bName").oninput = (e) => { b.name = e.target.value; save(); };
+  $("#bAdd").onclick = () => { const used = new Set(b.cells.map(c => c.key)); const k = DEFAULT_KEYS.find(k => !used.has(k)) || null; b.cells.push({ id: nid(), picto: ic("más"), label: "nuevo", say: "", audio: null, key: k }); save(); re(); };
+  $("#bUse").onclick = () => { S.activeBoard = id; S.mode = "comunicar"; run.said = null; save(); toast("Tablero activado en «Comunicar»."); };
+  $("#bNew").onclick = () => { const nidb = "t" + nid(); S.boards[nidb] = JSON.parse(JSON.stringify({ name: b.name + " (copia)", cells: b.cells })); S.boards[nidb].cells.forEach(c => c.id = nid()); S._editBoard = nidb; save(); re(); };
+  const del = $("#bDel"); del.onclick = () => {
+    if (del.dataset.armed !== "1") { del.dataset.armed = "1"; del.textContent = "Pulsa otra vez para borrar"; return; }
+    delete S.boards[id]; const first = Object.keys(S.boards)[0];
+    if (S.activeBoard === id) S.activeBoard = first; if (S.elegir.board === id) S.elegir.board = first; S._editBoard = first; save(); re();
+  };
+}
+function tabSecuencias(body) {
+  const id = S._editSeq && S.sequences[S._editSeq] ? S._editSeq : S.activeSeq; S._editSeq = id;
+  const s = S.sequences[id];
+  body.innerHTML = `
+    <div class="row"><label class="field" style="flex:1 1 220px"><span>Secuencia que editas</span><select id="qSel">${Object.entries(S.sequences).map(([k, v]) => opt(k, v.name, id)).join("")}</select></label>
+      <label class="field" style="flex:1 1 220px"><span>Nombre</span><input type="text" id="qName" value="${esc(s.name)}"></label></div>
+    <div class="row"><button class="btn primary" type="button" id="qAdd" ${s.steps.length >= 12 ? "disabled" : ""}>Añadir paso</button>
+      <button class="btn" type="button" id="qUse">Usar esta secuencia ahora</button>
+      <button class="btn" type="button" id="qNew">Nueva secuencia (copia)</button>
+      <button class="btn danger" type="button" id="qDel" ${Object.keys(S.sequences).length <= 1 ? "disabled" : ""}>Borrar secuencia</button></div>
+    <p>Usa las mismas rutinas y pictogramas que el alumno ya conoce por su agenda. Recomendado: entre 3 y 6 pasos.</p>
+    <div class="list" id="qList"></div>`;
+  const re = () => tabSecuencias(body);
+  itemEditor($("#qList"), s.steps, false, re);
+  $("#qSel").onchange = (e) => { S._editSeq = e.target.value; re(); };
+  $("#qName").oninput = (e) => { s.name = e.target.value; save(); };
+  $("#qAdd").onclick = () => { s.steps.push({ id: nid(), picto: ic("más"), label: "nuevo", say: "", audio: null, key: null }); save(); re(); };
+  $("#qUse").onclick = () => { S.activeSeq = id; S.mode = "pasos"; run.step = 0; save(); toast("Secuencia activada en «Paso a paso»."); };
+  $("#qNew").onclick = () => { const k = "s" + nid(); S.sequences[k] = JSON.parse(JSON.stringify({ name: s.name + " (copia)", steps: s.steps })); S._editSeq = k; save(); re(); };
+  const del = $("#qDel"); del.onclick = () => {
+    if (del.dataset.armed !== "1") { del.dataset.armed = "1"; del.textContent = "Pulsa otra vez para borrar"; return; }
+    delete S.sequences[id]; const first = Object.keys(S.sequences)[0]; if (S.activeSeq === id) S.activeSeq = first; S._editSeq = first; save(); re();
+  };
+}
+function tabSensorial(body) {
+  const st = S.settings;
+  const vopts = voices.length ? voices.map(v => opt(v.name, v.name + " (" + v.lang + ")", st.voiceName)).join("") : "";
+  body.innerHTML = `
+    <div><h3>Ajustes sensoriales</h3><p>Ajústalos a cada alumno o alumna. Menos estímulo suele ser mejor al principio.</p></div>
+    <div class="cfg">
+      <label class="field"><span>Colores</span><select id="sTheme">${opt("auto", "Como el sistema", st.theme)}${opt("suave", "Claro suave", st.theme)}${opt("oscuro", "Oscuro tranquilo", st.theme)}${opt("contraste", "Alto contraste", st.theme)}</select></label>
+      <label class="field"><span>Animaciones</span><select id="sMotion">${opt("auto", "Según el sistema", st.motion)}${opt("on", "Sí", st.motion)}${opt("off", "No (sin movimiento)", st.motion)}</select></label>
+      <label class="field"><span>Sonidos</span><select id="sSound">${opt("true", "Sí", st.sound)}${opt("false", "No", st.sound)}</select></label>
+      <label class="field"><span>Volumen</span><input type="range" id="sVol" min="0" max="1" step="0.05" value="${st.volume}"></label>
+      <label class="field"><span>Voz</span><select id="sVoice">${opt("true", "Sí, leer los pictogramas", st.voice)}${opt("false", "No", st.voice)}</select></label>
+      <label class="field"><span>Velocidad de la voz</span><select id="sRate">${opt(0.7, "Lenta", st.rate)}${opt(0.9, "Tranquila", st.rate)}${opt(1, "Normal", st.rate)}</select></label>
+      <label class="field"><span>Voz del sistema</span><select id="sVName">${opt("", voices.length ? "Automática (español)" : "Sin voces en español en este equipo", st.voiceName)}${vopts}</select></label>
+      <label class="field"><span>Texto bajo el pictograma</span><select id="sLabels">${opt("true", "Sí", st.labels)}${opt("false", "No", st.labels)}</select></label>
+      <label class="field"><span>Letra</span><select id="sUpper">${opt("true", "MAYÚSCULAS", st.upper)}${opt("false", "minúsculas", st.upper)}</select></label>
+      <label class="field"><span>Tamaño del texto</span><select id="sSize">${opt("normal", "Normal", st.labelSize)}${opt("grande", "Grande", st.labelSize)}${opt("enorme", "Muy grande", st.labelSize)}</select></label>
+      <label class="field"><span>Mostrar la tecla en cada ficha</span><select id="sKeys">${opt("true", "Sí (útil al montar)", st.keys)}${opt("false", "No", st.keys)}</select></label>
+      <label class="field"><span>Pausa entre pulsaciones</span><select id="sCool">${opt(300, "0,3 s", st.cooldown)}${opt(700, "0,7 s", st.cooldown)}${opt(1200, "1,2 s", st.cooldown)}${opt(2000, "2 s (pulsaciones repetidas)", st.cooldown)}</select></label>
+    </div>
+    <div class="row"><button class="btn" type="button" id="sTest">Probar voz y sonido</button></div>`;
+  const bind = (id, key, conv = (v) => v) => { $(id).onchange = (e) => { st[key] = conv(e.target.value); save(); applySettings(); }; };
+  bind("#sTheme", "theme"); bind("#sMotion", "motion"); bind("#sSound", "sound", v => v === "true"); bind("#sVoice", "voice", v => v === "true");
+  bind("#sRate", "rate", Number); bind("#sVName", "voiceName"); bind("#sLabels", "labels", v => v === "true"); bind("#sUpper", "upper", v => v === "true");
+  bind("#sSize", "labelSize"); bind("#sKeys", "keys", v => v === "true"); bind("#sCool", "cooldown", Number);
+  $("#sVol").oninput = (e) => { st.volume = Number(e.target.value); if (master) master.gain.value = st.volume; save(); };
+  $("#sTest").onclick = () => { sfx("campana"); setTimeout(() => say("Hola. Así sueno."), 300); };
+}
+function tabRegistro(body) {
+  const L = S.log; const rows = Object.entries(L.comunicar).sort((a, b) => b[1] - a[1]);
+  const since = new Date(L.since);
+  body.innerHTML = `
+    <div><h3>Registro de uso</h3><p>Desde el ${since.toLocaleDateString("es-ES")} a las ${since.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}. Solo se guarda en este navegador y no incluye nombres. Úsalo como evidencia observable junto a tu registro de aula.</p></div>
+    <table class="log"><tbody>
+      <tr><th>Causa-efecto: activaciones</th><td>${L.causa}</td></tr>
+      <tr><th>Paso a paso: secuencias completadas</th><td>${L.pasos}</td></tr>
+      <tr><th>¿Dónde está?: aciertos sin ayuda</th><td>${L.elegirSin}</td></tr>
+      <tr><th>¿Dónde está?: aciertos con ayuda</th><td>${L.elegirCon}</td></tr>
+    </tbody></table>
+    <div><h3>Comunicar: veces que se ha elegido cada pictograma</h3></div>
+    ${rows.length ? `<table class="log"><tbody>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${v}</td></tr>`).join("")}</tbody></table>` : `<p>Todavía no hay pulsaciones en «Comunicar».</p>`}
+    <div class="row"><button class="btn" type="button" id="lCopy">Copiar registro</button><button class="btn danger" type="button" id="lReset">Empezar registro nuevo</button></div>`;
+  $("#lCopy").onclick = async () => {
+    const txt = `Registro Pictoteclas (desde ${since.toLocaleString("es-ES")})\nCausa-efecto: ${L.causa}\nPaso a paso completadas: ${L.pasos}\n¿Dónde está? sin ayuda: ${L.elegirSin} · con ayuda: ${L.elegirCon}\n` + rows.map(([k, v]) => `${k}: ${v}`).join("\n");
+    try { await navigator.clipboard.writeText(txt); toast("Registro copiado."); } catch (e) { toast("No se ha podido copiar. Selecciona el texto de la tabla."); }
+  };
+  const r = $("#lReset"); r.onclick = () => { if (r.dataset.armed !== "1") { r.dataset.armed = "1"; r.textContent = "Pulsa otra vez para borrar el registro"; return; } S.log = defaultState().log; save(); tabRegistro(body); };
+}
+function exportable() { const c = JSON.parse(JSON.stringify(S)); delete c._editBoard; delete c._editSeq; return c; }
+function tabGuardar(body) {
+  body.innerHTML = `
+    <div><h3>Guardar y llevar la configuración a otro equipo</h3><p>Todo se guarda solo en este navegador. Para pasarlo a otro ordenador o compartirlo con otro docente, descarga el archivo y cárgalo allí.</p></div>
+    <div class="row"><button class="btn primary" type="button" id="gDown">Descargar configuración (.json)</button><button class="btn" type="button" id="gCopy">Copiar como texto</button>
+      <label class="btn" style="display:inline-grid;place-items:center">Cargar archivo .json<input type="file" id="gFile" accept="application/json,.json" hidden></label></div>
+    <label class="field"><span>O pega aquí una configuración copiada como texto</span><textarea id="gText" spellcheck="false" placeholder='{"version":1, ...}'></textarea></label>
+    <div class="row"><button class="btn" type="button" id="gLoad">Cargar texto pegado</button><button class="btn danger" type="button" id="gReset">Volver a los tableros de ejemplo</button></div>
+    <p class="credits">Las imágenes y grabaciones que subas ocupan espacio. Si aparece un aviso de almacenamiento lleno, usa imágenes más pequeñas o grabaciones más cortas.</p>`;
+  const data = () => JSON.stringify(exportable());
+  $("#gDown").onclick = () => {
+    try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data()], { type: "application/json" })); a.download = "pictoteclas-configuracion.json"; document.body.appendChild(a); a.click(); a.remove(); toast("Si no se descarga, usa «Copiar como texto»."); }
+    catch (e) { toast("No se ha podido descargar aquí. Usa «Copiar como texto»."); }
+  };
+  $("#gCopy").onclick = async () => { $("#gText").value = data(); try { await navigator.clipboard.writeText(data()); toast("Configuración copiada."); } catch (e) { $("#gText").select(); toast("Selecciona y copia el texto del recuadro."); } };
+  const loadText = (txt) => { try { const d = JSON.parse(txt); if (!d || d.version !== 1 || !d.boards) throw 0; S = merge(defaultState(), d); save(); run.said = null; run.choose = null; run.step = 0; toast("Configuración cargada."); tabGuardar(body); } catch (e) { toast("Ese texto no es una configuración de Pictoteclas."); } };
+  $("#gFile").onchange = async (e) => { const f = e.target.files[0]; if (f) loadText(await f.text()); };
+  $("#gLoad").onclick = () => loadText($("#gText").value);
+  const r = $("#gReset"); r.onclick = () => { if (r.dataset.armed !== "1") { r.dataset.armed = "1"; r.textContent = "Pulsa otra vez: se pierden tus cambios"; return; } S = defaultState(); save(); run.said = null; run.choose = null; run.step = 0; toast("Tableros de ejemplo restaurados."); tabGuardar(body); };
+}
+function tabAyuda(body) {
+  body.innerHTML = `
+    <div><h3>Montaje con Makey Makey</h3>
+    <p>1. Conecta la Makey Makey por USB. No hay que instalar nada: el ordenador la reconoce como un teclado.<br>
+    2. Une con una pinza cada objeto conductor (papel de aluminio, plastilina, una cuchara…) a la entrada que indica la tecla de la ficha: ← → ↑ ↓, ESPACIO o CLIC. Detrás están W, A, S, D, F y G.<br>
+    3. El alumno o alumna debe tocar a la vez la TIERRA (Earth). Si no puede sujetarla, pega en la misma superficie dos tiras de aluminio separadas unos milímetros: una a la tecla y otra a tierra.<br>
+    4. Con CLIC, deja el puntero del ratón en una zona vacía de la pantalla: el clic actúa donde esté el puntero.<br>
+    5. Comprueba cada entrada en «Actividad → Comprobar las conexiones».</p></div>
+    <div><h3>Ideas para el aula</h3>
+    <p>Empieza por «Causa-efecto» con una sola superficie grande. Después «Sí / No» con dos teclas, más tarde «Comunicar» con 4 a 6 fichas. «Paso a paso» sirve para anticipar rutinas y «¿Dónde está?» para la discriminación visual sin errores. Complementa, no sustituye, el sistema de comunicación de cada alumno: usa su vocabulario y sus pictogramas y coordínalo con el profesorado de AL y PT y con la familia.</p></div>
+    <div><h3>Abrir el panel docente</h3><p>Mantén pulsado el engranaje 1 segundo o pulsa la tecla Esc del teclado. Así el alumnado no lo abre por accidente.</p></div>
+    <div><h3>Créditos y licencias</h3>
+    <p class="credits"><b>Pictoteclas, diseñado por David OZC.</b><br>Pictogramas de ARASAAC (cuando los añades desde la búsqueda): autor Sergio Palao. Origen: ARASAAC (arasaac.org). Licencia: CC BY-NC-SA. Propiedad: Gobierno de Aragón (España).<br>
+    Iconos de ejemplo incluidos: Font Awesome Free (fontawesome.com), licencia CC BY 4.0.<br>
+    Pictoteclas es un recurso educativo libre para uso no comercial. No guarda datos personales: todo queda en este navegador.</p></div>`;
+}
+
+/* ======================= SELECTOR DE PICTOGRAMAS ======================= */
+let pickCb = null, ptab = "iconos";
+function openPicker(cb) { pickCb = cb; renderPicker(); $("#picker").showModal(); }
+$("#closePicker").addEventListener("click", () => $("#picker").close());
+function choose(p) { $("#picker").close(); if (pickCb) pickCb(p); }
+function renderPicker() {
+  const PT = [["iconos", "Incluidos"], ["arasaac", "Buscar en ARASAAC"], ["subir", "Subir imagen"]];
+  $("#ptabs").innerHTML = PT.map(([id, n]) => `<button role="tab" type="button" aria-selected="${id === ptab}" data-pt="${id}">${n}</button>`).join("");
+  $("#ptabs").onclick = (e) => { const b = e.target.closest("[data-pt]"); if (b) { ptab = b.dataset.pt; renderPicker(); } };
+  const body = $("#pbody");
+  if (ptab === "iconos") {
+    const groups = {};
+    Object.entries(ICONS).forEach(([n, v]) => (groups[v.cat] = groups[v.cat] || []).push(n));
+    body.innerHTML = Object.keys(CATS).filter(c => groups[c]).map(c => `<div><h3>${CATS[c]}</h3></div><div class="pgrid">${groups[c].map(n => `<button type="button" class="cat-${c}" data-n="${esc(n)}">${pictoHTML(ic(n))}<span>${esc(n)}</span></button>`).join("")}</div>`).join("");
+    body.onclick = (e) => { const b = e.target.closest("[data-n]"); if (b) choose(Object.assign(ic(b.dataset.n), { label: b.dataset.n })); };
+  } else if (ptab === "arasaac") {
+    body.innerHTML = `<div class="row"><input type="search" id="aQ" placeholder="Escribe una palabra: agua, recreo, guagua…" style="flex:1 1 220px" aria-label="Palabra a buscar en ARASAAC"><button class="btn primary" type="button" id="aGo">Buscar</button></div>
+      <label class="field" style="max-width:260px"><span>Color del borde (categoría)</span><select id="aCat">${Object.entries(CATS).map(([k, v]) => opt(k, v, "cosa")).join("")}</select></label>
+      <p id="aMsg">Necesita conexión a internet. Funciona al abrir la app desde GitHub Pages o desde tu ordenador.</p>
+      <div class="pgrid" id="aRes"></div>
+      <p class="credits">Pictogramas: Sergio Palao. Origen: ARASAAC (arasaac.org). Licencia: CC BY-NC-SA. Propiedad: Gobierno de Aragón (España).</p>`;
+    const go = async () => {
+      const q = $("#aQ").value.trim(); if (!q) return;
+      $("#aMsg").textContent = "Buscando…"; $("#aRes").innerHTML = "";
+      try {
+        const r = await fetch("https://api.arasaac.org/v1/pictograms/es/search/" + encodeURIComponent(q));
+        if (r.status === 404) { $("#aMsg").textContent = "No hay pictogramas para «" + q + "». Prueba con otra palabra."; return; }
+        if (!r.ok) throw new Error(r.status);
+        const list = (await r.json()).slice(0, 30);
+        $("#aMsg").textContent = list.length + " resultados. Toca uno para elegirlo.";
+        $("#aRes").innerHTML = list.map(p => { const kw = (p.keywords && p.keywords[0] && p.keywords[0].keyword) || q;
+          return `<button type="button" data-id="${p._id}" data-kw="${esc(kw)}"><img src="https://static.arasaac.org/pictograms/${p._id}/${p._id}_300.png" alt="${esc(kw)}" loading="lazy"><span>${esc(kw)}</span></button>`; }).join("");
+      } catch (e) {
+        $("#aMsg").textContent = "No se ha podido conectar con ARASAAC (sin internet, red que lo bloquea o vista previa restringida). Puedes descargar el pictograma en arasaac.org y añadirlo con «Subir imagen».";
+      }
+    };
+    $("#aGo").onclick = go; $("#aQ").onkeydown = (e) => { if (e.key === "Enter") go(); };
+    $("#aRes").onclick = async (e) => {
+      const b = e.target.closest("[data-id]"); if (!b) return;
+      const url = `https://static.arasaac.org/pictograms/${b.dataset.id}/${b.dataset.id}_300.png`;
+      let src = url;
+      try { const r = await fetch(url); if (r.ok) src = await fileToDataURL(await r.blob()); } catch (err) { /* se guarda el enlace: necesitará conexión */ }
+      choose({ type: "img", src, cat: $("#aCat").value, label: b.dataset.kw, source: "arasaac" });
+    };
+  } else {
+    body.innerHTML = `<p>Sube un pictograma descargado de ARASAAC, una foto real del objeto o un dibujo. Se reduce automáticamente para ocupar poco.</p>
+      <div class="row"><label class="btn primary" style="display:inline-grid;place-items:center">Elegir imagen<input type="file" id="uFile" accept="image/*" hidden></label>
+      <label class="field" style="min-width:220px"><span>Color del borde (categoría)</span><select id="uCat">${Object.entries(CATS).map(([k, v]) => opt(k, v, "cosa")).join("")}</select></label></div>
+      <p class="credits">Si usas fotos del alumnado o de familias, cuenta con su autorización: la imagen se queda solo en este navegador y en los archivos que exportes.</p>`;
+    $("#uFile").onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      try { const src = await shrinkImage(f, 360); choose({ type: "img", src, cat: $("#uCat").value, label: f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").slice(0, 30) }); }
+      catch (err) { toast("No se ha podido leer esa imagen. Prueba con un PNG o JPG."); }
+    };
+  }
+}
+function shrinkImage(file, max) {
+  return new Promise((res, rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      let out = c.toDataURL("image/webp", 0.85); if (!out.startsWith("data:image/webp")) out = c.toDataURL("image/png");
+      res(out);
+    };
+    img.onerror = rej; img.src = url;
+  });
+}
+
+/* ======================= ARRANQUE ======================= */
+let resizeT = null;
+addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { const g = $("#grid"); if (g) fitGrid(g, g.children.length); }, 80); });
+window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", applySettings);
+render();
+</script>
+
+</body>
+</html>
