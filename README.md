@@ -2,6 +2,8 @@
 
 **Diseñado por David OZC.**
 
+[![Licencia CC BY-NC-ND 4.0](cc-by-nc-nd.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es)
+
 Tableros de pictogramas que se activan con **Makey Makey**, pensados para alumnado TEA y con necesidades específicas de apoyo educativo (NEAE).
 
 Funciona en el navegador, sin instalar nada y sin cuentas. Todo se guarda en el propio navegador del equipo.
@@ -48,10 +50,22 @@ También puedes abrir `index.html` directamente con doble clic. Así funciona to
 
 No hay servidor ni analítica. Los tableros, imágenes, grabaciones y el registro se guardan solo en el navegador del equipo. Si usas fotos del alumnado o de las familias, cuenta con su autorización.
 
+## Licencia
+
+Pictoteclas © 2026 David OZC. **Uso gratuito en centros educativos.**
+
+Esta obra está bajo una licencia [Creative Commons Reconocimiento-NoComercial-SinObraDerivada 4.0 Internacional (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es):
+
+- **Reconocimiento (BY):** hay que citar la autoría (David OZC) y enlazar la licencia.
+- **NoComercial (NC):** no se puede usar con fines comerciales.
+- **SinObraDerivada (ND):** se puede compartir tal cual, pero no distribuir versiones modificadas.
+
+Los tableros y secuencias que cada docente crea con la aplicación son suyos. Los elementos de terceros conservan sus licencias (ver abajo).
+
 ## Créditos y licencias
 
-- Diseño de la aplicación: David OZC.
+- Diseño de la aplicación: David OZC (CC BY-NC-ND 4.0).
 - Pictogramas de ARASAAC (cuando se añaden desde la búsqueda): autor Sergio Palao. Origen: ARASAAC (https://arasaac.org). Licencia: CC BY-NC-SA. Propiedad: Gobierno de Aragón (España).
 - Iconos de ejemplo incluidos: Font Awesome Free (https://fontawesome.com), licencia CC BY 4.0.
 - Tipografías: Lexend y Atkinson Hyperlegible (Google Fonts, licencia SIL Open Font License). Sin conexión se usan las fuentes del sistema.
-- Recurso educativo para uso no comercial.
+- Logotipos de Creative Commons: usados según la política de marcas de Creative Commons para indicar la licencia de la obra.
